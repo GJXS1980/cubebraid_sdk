@@ -1,5 +1,6 @@
 ﻿#ifndef JSONPARAMETER_SDK_H
 #define JSONPARAMETER_SDK_H
+#include <fstream>
 
 // ============================================================
 // DLL 导出宏
@@ -197,7 +198,7 @@ int JsonParameterSDK_GetRobotPose(const char* file_path, int param_mode, RobotPo
 
 // 获取倾角仪端口
 JSONPARAMETER_SDK_API
-int JsonParameterSDK_GetInclinometerPort(const char* file_path, int port_index, char* buffer, int buffer_size);
+int JsonParameterSDK_GetInclinometerPort(const char* file_path, int port_index, std::string& port); 
 
 // 获取续码面数/层数
 JSONPARAMETER_SDK_API
