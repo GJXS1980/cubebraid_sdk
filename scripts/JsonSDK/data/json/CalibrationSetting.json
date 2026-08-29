@@ -1,0 +1,19 @@
+﻿
+[
+  {
+    "CameraMountingMode": "ETH",
+    "CalibrationBoardModel": "BDB_7",
+    "eulerType": "rzyz",
+    "rows": 2,
+    "columns": 3,
+    "layers": 3,
+    "Height_range": 200,
+    "Bottom_x": 150,
+    "Bottom_y": 150,
+    "Top_x": 50,
+    "Top_y": 50,
+    "Tilt_Angle": 15,
+    "Remark": "手眼标定配置文件",
+    "Note": "CameraMountingMode为标定板类型, CalibrationBoardModel为手眼标定模式, eulerType为欧拉角旋转顺序"
+  }
+]

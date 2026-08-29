@@ -1,0 +1,7 @@
+﻿ver = 1.0
+SurfaceNum =1
+LayerNum =1
+WorkModNum =1
+AGVModNum =0
+ActionNum = 1		
+StackType = 1		

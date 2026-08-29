@@ -1,0 +1,16 @@
+﻿[
+  {
+    "sku_l": 490,
+    "sku_w": 390,
+    "sku_h": 300,
+    "sku_weight": 10,
+    "Remark": "产品1"
+  },
+  {
+    "sku_l": 490,
+    "sku_w": 390,
+    "sku_h": 300,
+    "sku_weight": 10,
+    "Remark": "产品2(暂时没有用上)"
+  }
+]
