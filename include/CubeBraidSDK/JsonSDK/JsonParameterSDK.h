@@ -33,7 +33,8 @@
 // ============================================================
 
 #ifdef __cplusplus
-extern "C" {
+extern "C" 
+{
 #endif
 
 // ============================================================
@@ -41,10 +42,10 @@ extern "C" {
 // ============================================================
 enum JsonParameterSDKError
 {
-    // 成功
+    // 操作成功
     JSONPARAM_SDK_SUCCESS              = 0,
 
-    // 未知错误
+    // 参数错误
     JSONPARAM_SDK_ERROR_UNKNOWN        = -1,
 
     // 参数错误，例如空指针
@@ -69,7 +70,10 @@ enum JsonParameterSDKError
     JSONPARAM_SDK_ERROR_BUFFER_SMALL   = -8,
 
     // 文件写入失败
-    JSONPARAM_SDK_ERROR_WRITE_FAILED   = -9
+    JSONPARAM_SDK_ERROR_WRITE_FAILED   = -9,
+
+    // TXT配置文件错误
+    JSONPARAM_SDK_ERROR_CONFIG = -10
 };
 
 
@@ -80,10 +84,12 @@ enum JsonParameterSDKError
 // 手眼标定数据
 typedef struct CalibrationPose
 {
+    // 手眼标定位置
     float x;
     float y;
     float z;
 
+    // 手眼标定姿态(四元数)
     float qw;
     float qx;
     float qy;
@@ -94,20 +100,22 @@ typedef struct CalibrationPose
 // SKU 数据
 typedef struct SkuData
 {
-    double length;
-    double width;
-    double height;
-    double weight;
+    double length;  // 产品长(mm)
+    double width;   // 产品宽(mm)
+    double height;  // 产品高(mm)
+    double weight;  // 产品重量(kg)
 } SkuData;
 
 
 // 机器人位姿
 typedef struct RobotPose
 {
+    // 机器人位置
     float x;
     float y;
     float z;
 
+    // 机器人姿态
     float rx;
     float ry;
     float rz;
@@ -117,28 +125,49 @@ typedef struct RobotPose
 // 续码配置
 typedef struct ContinuationConfig
 {
+    // 面数
     int surface_num;
+
+    // 层数
     int layer_num;
-    int action_num;
+
+    // 工作模式
     int work_mode_num;
-    int stack_type;
+
+    // AGV模式
     int agv_mode_num;
 
+    // 动作数量
+    int action_num;
+
+    // 码垛类型(预留)
+    int stack_type;
 } ContinuationConfig;
 
 // 机器人状态
 typedef struct RobotState
 {
+    // 工作模式
     int work_mode_state;
+
+    // 当前面状态
     int surface_state;
+
+    // 当前层状态
     int layer_state;
+
+    // 当前动作状态
     int action_state;
+
+    // 总数量
     int total_num;
 
+    // 机器人当前位置
     float x;
     float y;
     float z;
 
+    // 机器人当前姿态
     float rx;
     float ry;
     float rz;
@@ -229,6 +258,7 @@ int JsonParameterSDK_GetContinuationConfig(const char* file_path, ContinuationCo
 // 获取垛型特殊面 diff_x
 JSONPARAMETER_SDK_API
 int JsonParameterSDK_GetStackStyleDiffX(const char* file_path, int index, float* diff_x);
+
 
 #ifdef __cplusplus
 }
