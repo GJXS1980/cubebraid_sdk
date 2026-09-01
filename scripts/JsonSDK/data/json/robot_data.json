@@ -1,17 +1,17 @@
 [
     {
         "Remark": "基准点、面数、层数、个数、模式",
-        "action_num": 3,
-        "box_num": 5,
-        "layer_num": 8.0,
+        "action_num": 0,
+        "box_num": 0,
+        "layer_num": 0,
         "rx": 0.0,
         "ry": 0.0,
         "rz": 0.0,
-        "surface_num": 4,
-        "switch_num": 2,
-        "total_num": 176,
-        "x": 3.0,
-        "y": 3.01,
-        "z": 3.02
+        "surface_num": 0,
+        "switch_num": -1,
+        "total_num": 0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
     }
 ]

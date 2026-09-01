@@ -39,7 +39,7 @@ int main()
         std::cout << "z = " << robotpose.z << std::endl;
     }
 
-    std::string inclinometerPort;
+    char inclinometerPort[256] = {0};
     ret = JsonParameterSDK_GetInclinometerPort("./data/json/setting_parameters.json", 5, inclinometerPort);
     if (ret == JSONPARAM_SDK_SUCCESS)
     {
@@ -48,7 +48,7 @@ int main()
 
     int sur_num = 0;
     int layer_num = 0;
-    ret = JsonParameterSDK_GetContinuationSurfaceLayer("./data/json/setting_parameters.json", 4,  &sur_num,  &layer_num);
+    ret = JsonParameterSDK_GetContinuationSurfaceLayer("./data/json/rd_demo_data_keba.json", 4,  &sur_num,  &layer_num);
     if (ret == JSONPARAM_SDK_SUCCESS)
     {
         std::cout << "sur_num: " << sur_num << std::endl;

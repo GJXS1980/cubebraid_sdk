@@ -209,11 +209,11 @@ int JsonParameterSDK_GetLastError(char* buffer, int buffer_size);
 JSONPARAMETER_SDK_API
 int JsonParameterSDK_CheckJsonFile(const char* file_path);
 
-// 获取手眼标定数据
+// 获取手眼标定参数
 JSONPARAMETER_SDK_API
 int JsonParameterSDK_GetCalibration(const char* file_path, int cam_mode, CalibrationPose* result);
 
-// 获取 SKU 数据
+// 获取 SKU 产品数据
 JSONPARAMETER_SDK_API
 int JsonParameterSDK_GetSku(const char* file_path, int sku_index, SkuData* result);
 
@@ -227,7 +227,8 @@ int JsonParameterSDK_GetRobotPose(const char* file_path, int param_mode, RobotPo
 
 // 获取倾角仪端口
 JSONPARAMETER_SDK_API
-int JsonParameterSDK_GetInclinometerPort(const char* file_path, int port_index, std::string& port); 
+// int JsonParameterSDK_GetInclinometerPort(const char* file_path, int port_index, std::string& port); 
+int JsonParameterSDK_GetInclinometerPort(const char* file_path, int port_index, char* port); 
 
 // 获取续码面数/层数
 JSONPARAMETER_SDK_API
