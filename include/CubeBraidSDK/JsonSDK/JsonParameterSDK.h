@@ -174,6 +174,38 @@ typedef struct RobotState
 
 } RobotState;
 
+// 垛型数据
+typedef struct PalletizingPatternData
+{
+    int number_of_surface = 0;       // Number of surface 面数
+    int number_of_layers = 0;        // Number of layers 层数
+
+    int fixture_mode = 0;            // fixture mode 夹具模式(预留参数暂时没有用上,多夹具TCP切换,默认:1)
+    int fetch_mode = 0;              // Fetch mode 夹具取料模式
+    int mode_switch = 0;             // mode_switch  顶吸(1)/侧吸(2)模式
+
+    bool r_offset = false;            // ROffset    每层最左侧垛型
+
+    int stack_type = 0;               // stack Type 垛型类型(预留参数，暂时没有用上)
+    int product_type = 0;             // Product Type 正常码法(1)/特殊码法第一面最上面一层右侧两个横纸箱特殊码法(2)
+    int special_stack_type = 0;       // Special_Stack_Type 正常码法(0)/一横多竖特殊码法(1)
+
+    float x = 0.0;                    // 垛型在x方向偏移值(单位:mm)
+    float y = 0.0;                    // 垛型在y方向偏移值(单位:mm)
+    float z = 0.0;                    // 垛型在z方向偏移值(单位:mm)
+
+    float sku_l = 0.0;                // 产品长(单位:mm)
+    float sku_w = 0.0;                // 产品宽(单位:mm)
+    float sku_h = 0.0;                // 产品高(单位:mm)
+    float sku_weight = 0.0;           // 产品重量(单位:kg)
+
+    float container_l = 0.0;          // 集装箱长(单位:mm)
+    float container_w = 0.0;          // 集装箱宽(单位:mm)
+    float container_h = 0.0;          // 集装箱高(单位:mm)
+
+    int sku_num = 0;                  // 单次动作抓取产品数量(单位:箱)
+} PalletizingPatternData;
+
 
 // ============================================================
 // SDK 生命周期
@@ -259,6 +291,10 @@ int JsonParameterSDK_GetContinuationConfig(const char* file_path, ContinuationCo
 // 获取垛型特殊面 diff_x
 JSONPARAMETER_SDK_API
 int JsonParameterSDK_GetStackStyleDiffX(const char* file_path, int index, float* diff_x);
+
+// 获取垛型数据
+JSONPARAMETER_SDK_API
+int JsonParameterSDK_GetPalletizingPatternData(const char* file_path, int index, PalletizingPatternData* result);
 
 
 #ifdef __cplusplus

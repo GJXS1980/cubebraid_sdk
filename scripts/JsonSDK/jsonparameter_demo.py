@@ -44,4 +44,8 @@ print("续码参数:", continuation_config)
 diff_x = sdk.get_stackStyle_diffx(r"./data/json/test_demo.json", 5)
 print("左侧突出值:", diff_x)
 
+# 获取垛型数据
+palletizing_pattern_data = sdk.get_palletizing_pattern_data(r"./data/json/rd_demo_data_keba.json", 2)
+print("机器人取料/放料位姿:", palletizing_pattern_data)
+
 sdk.close()

@@ -64,6 +64,33 @@ class ContinuationConfig(ctypes.Structure):
         ("stack_type", ctypes.c_int),
     ]
 
+class PalletizingPatternData(ctypes.Structure):
+    _fields_ = [
+        ("number_of_surface", ctypes.c_int),
+        ("number_of_layers", ctypes.c_int),
+        ("fixture_mode", ctypes.c_int),
+        ("fetch_mode", ctypes.c_int),
+        ("mode_switch", ctypes.c_int),
+        
+        ("r_offset", ctypes.c_bool),
+        ("stack_type", ctypes.c_int),
+        ("product_type", ctypes.c_int),
+        ("special_stack_type", ctypes.c_int),
+
+        ("x", ctypes.c_float),
+        ("y", ctypes.c_float),
+        ("z", ctypes.c_float),
+
+        ("sku_l", ctypes.c_float),
+        ("sku_w", ctypes.c_float),
+        ("sku_h", ctypes.c_float),
+        
+        ("sku_weight", ctypes.c_float),
+        ("container_l", ctypes.c_float),
+        ("container_w", ctypes.c_float),
+        ("container_h", ctypes.c_float),
+        ("sku_num", ctypes.c_int),
+    ]
 
 class JsonParameterSDK:
 
@@ -180,6 +207,14 @@ class JsonParameterSDK:
             ctypes.POINTER(ctypes.c_float)
         ]
         self.dll.JsonParameterSDK_GetStackStyleDiffX.restype = ctypes.c_int
+        
+        # 获取垛型数据
+        self.dll.JsonParameterSDK_GetPalletizingPatternData.argtypes = [
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.POINTER(PalletizingPatternData)
+        ]
+        self.dll.JsonParameterSDK_GetPalletizingPatternData.restype = ctypes.c_int
 
 
     def get_last_error(self):
@@ -381,6 +416,41 @@ class JsonParameterSDK:
         if ret != 0:
             raise RuntimeError(self.get_last_error())
         return diff_x.value
+    
+    # 获取机器人取料/放料位姿
+    def get_palletizing_pattern_data(self, file_path, index=0):
+        result = PalletizingPatternData()
+        ret = self.dll.JsonParameterSDK_GetPalletizingPatternData(
+            file_path.encode("utf-8"),
+            index,
+            ctypes.byref(result)
+        )
+
+        if ret != 0:
+            raise RuntimeError(self.get_last_error())
+
+        return {
+            "number_of_surface": result.number_of_surface,
+            "number_of_layers": result.number_of_layers,
+            "fixture_mode": result.fixture_mode,
+            "fetch_mode": result.fetch_mode,
+            "mode_switch": result.mode_switch,
+            "r_offset": result.r_offset,
+            "stack_type": result.stack_type,
+            "product_type": result.product_type,
+            "special_stack_type": result.special_stack_type,
+            "x": result.x,
+            "y": result.y,
+            "z": result.z,
+            "sku_l": result.sku_l,
+            "sku_w": result.sku_w,
+            "sku_h": result.sku_h,
+            "sku_weight": result.sku_weight,
+            "container_l": result.container_l,
+            "container_w": result.container_w,
+            "container_h": result.container_h,
+            "sku_num": result.sku_num
+        }
 
 
     def close(self):
