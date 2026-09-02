@@ -1,207 +1,184 @@
 ﻿#ifndef ROBOT_SDK_H
 #define ROBOT_SDK_H
 
-#include <vector>
 #include <string>
 #include <memory>
 
-// 动态库导出宏定义
+// 动态库导出/导入宏定义
 #if defined(_WIN32) || defined(_WIN64)
     #ifdef ROBOT_SDK_EXPORTS
-        #define ROBOT_API __declspec(dllexport)
+        #define ROBOT_API __declspec(dllexport) // Windows 下导出符号
     #else
-        #define ROBOT_API __declspec(dllimport)
+        #define ROBOT_API __declspec(dllimport) // Windows 下导入符号
     #endif
 #else
-    #define ROBOT_API __attribute__((visibility("default")))
+    #define ROBOT_API __attribute__((visibility("default"))) // Linux/Mac 下设置默认可见性
 #endif
 
 namespace robot_sdk 
 {
+    /**
+     * @brief 机器人位姿结构体 (XYZABC,位置（单位：毫米）,姿态（单位：°）)
+     */
+    struct Pose { double x{0.0}, y{0.0}, z{0.0}, rx{0.0}, ry{0.0}, rz{0.0}; };
 
     /**
-    * @brief 机器人位姿结构体 (XYZOAT)
-    */
-    struct Pose 
-    {
-        double x{0.0}, y{0.0}, z{0.0};
-        double rx{0.0}, ry{0.0}, rz{0.0}; // O, A, T / 欧拉角
-    };
+     * @brief 机器人关节角度结构体 (J1-J6,单位:°)
+     */
+    struct Joint { double j1{0.0}, j2{0.0}, j3{0.0}, j4{0.0}, j5{0.0}, j6{0.0}; };
 
     /**
-    * @brief 机器人关节角度结构体 (J1-J6)
-    */
-    struct Joint 
-    {
-        double j1{0.0}, j2{0.0}, j3{0.0};
-        double j4{0.0}, j5{0.0}, j6{0.0};
-    };
+     * @brief 箱体/SKU 尺寸结构体 (mm)
+     */
+    struct BoxDimension { float length{0.0f}, width{0.0f}, height{0.0f}; };
 
     /**
-    * @brief 产品/SKU 尺寸结构体
-    */
-    struct BoxDimension 
-    {
-        float length{0.0f}; // 长 (mm)
-        float width{0.0f};  // 宽 (mm)
-        float height{0.0f}; // 高 (mm)
-    };
-
-    /**
-    * @brief 控制模式枚举
-    */
+     * @brief 运动控制精度模式
+     */
     enum class ControlMode 
-    {
-        Coarse = 1,      // 粗略到位 / 过渡点 (精细度 50/200mm)
-        Fine = 2,        // 精准到位 / 目标点 (精细度 1mm)
-        Transition = 3   // 远距离过渡点 (精细度 200mm)
+    { 
+        Coarse = 1,    // 粗略到位/过渡点 (精细度 50mm)
+        Fine = 2,      // 精准到位/目标点 (精细度 1mm)
+        Transition = 3 // 远距离过渡点 (精细度 200mm)
     };
 
+ 
     /**
-    * @brief 机器人控制与抓取算法 SDK 主类
-    */
+     * @brief 机器人 SDK 控制器主类
+     */
     class ROBOT_API RobotController 
     {
     public:
         RobotController();
         ~RobotController();
 
-        // ==========================================
-        // 机器人连接与生命周期管理
-        // ==========================================
-        
         /**
-        * @brief 机器人连接函数
-        * @param ip 机器人 IP 地址
-        * @param motionPort 控制端口 (默认 31400)
-        * @param statusPort 监听端口 (默认 31401)
-        * @return bool 连接是否成功
-        */
+         * @brief 连接机器人
+         * @param ip 机器人 IP 地址
+         * @param motionPort 控制运动端口 (默认 31400)
+         * @param statusPort 状态监听端口 (默认 31401)
+         * @return bool 连接是否成功
+         */
         bool connectRobot(const std::string& ip, int motionPort = 31400, int statusPort = 31401);
 
         /**
-        * @brief 断开机器人连接并释放套接字
-        */
+         * @brief 断开机器人连接
+         */
         void disconnectRobot();
 
         /**
-        * @brief 判断机械臂连接是否正常
-        * @return bool 连接状态
-        */
+         * @brief 检查当前是否已建立连接
+         * @return bool 是否连接成功
+         */
         bool isConnected() const;
 
-        // ==========================================
-        // 机器人运动控制接口
-        // ==========================================
-
         /**
-        * @brief 机器人位姿控制函数
-        * @param mode 控制模式 (1: 过渡点50mm, 2: 目标点1mm, 3: 过渡点200mm)
-        * @param pose 机器人在基坐标系下的目标位姿 (x, y, z, O, A, T)
-        * @return bool 发送及到位回应是否成功
-        */
+         * @brief 基于空间位姿的笛卡尔运动控制
+         * @param mode 运动控制模式 (Coarse/Fine/Transition)
+         * @param pose 目标位姿 (x, y, z, rx, ry, rz)
+         * @return bool 执行是否成功
+         */
         bool controlPosture(ControlMode mode, const Pose& pose);
 
         /**
-        * @brief 机器人关节控制函数
-        * @param mode 控制模式 (1: 过渡点, 2: 目标点)
-        * @param joint 机器人 6 个关节的目标角度
-        * @return bool 发送及到位回应是否成功
-        */
+         * @brief 基于关节角度的运动控制
+         * @param mode 运动控制模式 (Coarse/Fine)
+         * @param joint 6 个关节的目标角度
+         * @return bool 执行是否成功
+         */
         bool controlJoint(ControlMode mode, const Joint& joint);
 
+        // 获取机器人当前状态
+        Pose GetCurrentPose();
+        Joint GetCurrentJoint();
+        double GetJoint4Angle();
+
         // ==========================================
-        // 抓取/码垛算法与斜面补偿
+        // 抓取算法与斜面角度补偿接口
         // ==========================================
 
         /**
-        * @brief 顶吸数据斜面 x 方向补偿
-        * @param benchmark_x 基准点 x 坐标值（单位: mm）
-        * @param angleDeg 斜面倾斜值（单位: °）
-        * @param h 产品码垛高度值（单位: mm）
-        * @param x0 码垛点距离基准点坐标 x 的相对偏移量（单位: mm）
-        * @return float 机器人实际码垛 x 值
-        */
+         * @brief 顶吸斜面 X 方向位置补偿计算
+         */
         static float top_x_value(float benchmark_x, float angleDeg, float h, float x0);
 
         /**
-        * @brief 顶吸数据斜面 z 方向补偿
-        * @param angleDeg 斜面倾斜值（单位: °）
-        * @param h 产品码垛高度值（单位: mm）
-        * @param x0 码垛点距离基准点坐标 x 的相对偏移量（单位: mm）
-        * @return float 机器人实际码垛 z 补偿值
-        */
+         * @brief 顶吸斜面 Z 方向位置补偿计算
+         */
         static float top_z_value(float angleDeg, float h, float x0);
 
         /**
-        * @brief 侧吸数据斜面 x 方向补偿
-        * @param benchmark_x 基准点 x 坐标值（单位: mm）
-        * @param angleDeg 斜面倾斜值（单位: °）
-        * @param h 产品码垛高度值（单位: mm）
-        * @param x0 码垛点距离基准点坐标 x 的相对偏移量（单位: mm）
-        * @return float 机器人实际码垛 x 值
-        */
+         * @brief 侧吸斜面 X 方向位置补偿计算
+         */
         static float side_x_value(float benchmark_x, float angleDeg, float h, float x0);
 
         /**
-        * @brief 侧吸数据斜面 z 方向补偿
-        * @param angleDeg 斜面倾斜值（单位: °）
-        * @param h 产品码垛高度值（单位: mm）
-        * @param x0 码垛点距离基准点坐标 x 的相对偏移量（单位: mm）
-        * @return float 机器人实际码垛 z 补偿值
-        */
+         * @brief 侧吸斜面 Z 方向位置补偿计算
+         */
         static float side_z_value(float angleDeg, float h, float x0);
 
         /**
-        * @brief 顶吸偏移量 xyz 求解（带倾角补偿）
-        * @param centroid 基准点坐标 (米，算法内自动转 mm)
-        * @param box SKU 尺寸 (长, 宽, 高，单位: mm)
-        * @param fetchMode 抓取模式 (1,2: 吸取长边; 3,4: 吸取短边)
-        * @param sku_num 产品数量
-        * @param dis_y 每层剩余缝隙
-        * @param poseOffset 相机/JSON 偏移数据 (x, y, z，单位: mm)
-        * @param ROffset 左侧/右侧标志位 (true: 左侧, false: 右侧)
-        * @param model_mod 模型模式
-        * @param inclx_angle 斜面倾斜角度 (单位: °)
-        * @return Pose 计算后的机器人目标位姿 (x, y, z)
-        */
+         * @brief 带倾角补偿的顶吸目标位姿计算
+         * @param centroid 质心坐标基准 (米)
+         * @param box SKU 尺寸 (长宽局，单位: mm)
+         * @param fetchMode 抓取模式 (1,2: 吸长边; 3,4: 吸短边)
+         * @param sku_num 抓取箱子数量
+         * @param dis_y 层间缝隙 (mm)
+         * @param poseOffset 位姿偏移量 (mm)
+         * @param ROffset 左右侧标志位 (true: 左侧, false: 右侧)
+         * @param model_mod 模型模式
+         * @param inclx_angle 倾角大小 (°)
+         * @return Pose 计算后的最终机器人目标位姿
+         */
         static Pose Top_suction_angle(
-            const Pose& centroid, 
-            const BoxDimension& box, 
-            int fetchMode, 
-            int sku_num, 
-            float dis_y, 
-            const Pose& poseOffset, 
-            bool ROffset, 
-            int model_mod, 
-            double inclx_angle = 0.0
+            const Pose& centroid, const BoxDimension& box, int fetchMode, 
+            int sku_num, float dis_y, const Pose& poseOffset, bool ROffset, 
+            int model_mod, double inclx_angle = 0.0
         );
 
     private:
         class Impl;
-        std::unique_ptr<Impl> pImpl; // 使用 PImpl 隐藏 Socket 及网络平台实现
+        std::unique_ptr<Impl> pImpl; // PImpl 模式指针，用于隐藏底层通讯细节
     };
-
-} // namespace robot_sdk
+}
 
 // ==========================================
-// C API 导出接口 (支持 C# / Python / C 调用)
+// C 语言导出接口 (供 C# / Python / C++ 动态库调用)
 // ==========================================
 #ifdef __cplusplus
-extern "C" 
-{
-    #endif
+extern "C" {
+#endif
 
-    typedef void* RobotHandle;
+    typedef void* RobotHandle; // 机器人实例句柄
 
+    /** @brief 创建机器人控制器实例 */
     ROBOT_API RobotHandle Robot_Create();
+
+    /** @brief 销毁机器人控制器实例 */
     ROBOT_API void Robot_Destroy(RobotHandle handle);
+
+    /** @brief 连接机器人 */
     ROBOT_API int Robot_Connect(RobotHandle handle, const char* ip, int motionPort, int statusPort);
+
+    /** @brief 断开连接 */
     ROBOT_API void Robot_Disconnect(RobotHandle handle);
+
+    /** @brief 笛卡尔空间位姿控制 */
     ROBOT_API int Robot_ControlPosture(RobotHandle handle, int mode, double x, double y, double z, double rx, double ry, double rz);
+
+    /** @brief 关节角度控制 */
     ROBOT_API int Robot_ControlJoint(RobotHandle handle, int mode, double j1, double j2, double j3, double j4, double j5, double j6);
 
-    #ifdef __cplusplus
+    /** @brief 获取当前位姿 */
+    ROBOT_API int Robot_GetCurrentPose(RobotHandle handle, double* x, double* y, double* z, double* rx, double* ry, double* rz);
+
+    /** @brief 获取当前关节角度 */
+    ROBOT_API int Robot_GetCurrentJoint(RobotHandle handle, double* j1, double* j2, double* j3, double* j4, double* j5, double* j6);
+
+    /** @brief 获取 J4 关节角度 */
+    ROBOT_API int Robot_GetJoint4Angle(RobotHandle handle, double* j4);
+
+#ifdef __cplusplus
 }
 #endif
 
