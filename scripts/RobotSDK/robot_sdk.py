@@ -104,6 +104,16 @@ sdk.Robot_TopSuctionSpecial.argtypes = [
     POINTER(c_double), POINTER(c_double), POINTER(c_double) # out x, y, z
 ]
 
+# 带倾角补偿的侧吸目标位姿计算
+sdk.Robot_SideSuctionAngle.restype = c_int
+sdk.Robot_SideSuctionAngle.argtypes = [
+    c_void_p,                                   # handle
+    Pose, BoxDimension, c_int, c_int,                 # centroid, box, fetchMode, fetchMode_side
+    c_int, c_float, Pose, c_bool,               # sku_num, dis_y, poseOffset, ROffset
+    c_int, c_double, c_float, c_bool,           # model_mod, inclx_angle, container_h, switch_top_bottom_suction
+    POINTER(c_double), POINTER(c_double), POINTER(c_double) # out x, y, z
+]
+
 # ============================================================
 # 业务逻辑控制封装类 (Pythonic Wrapper)
 # ============================================================
@@ -227,6 +237,23 @@ class RobotController:
             centroid, box, fetch_mode,
             sku_num, c_float(dis_y), pose_offset, r_offset,
             model_mod, c_double(inclx_angle),
+            byref(x), byref(y), byref(z)
+        )
+        if ret == 1:
+            return (x.value, y.value, z.value)
+        return (0.0, 0.0, 0.0)
+    def side_suction_angle(self, centroid: Pose, box: BoxDimension, fetch_mode: int, fetch_mode_side: int, sku_num: int, dis_y: float, pose_offset: Pose, r_offset: bool,
+                                model_mod: int, inclx_angle: float, container_h: float, switch_top_bottom_suction: bool) -> tuple:
+        """
+        带倾角补偿的侧吸目标位姿计算
+        :return: 装柜目标位置 (x, y, z)
+        """
+        x, y, z = c_double(), c_double(), c_double()
+        ret = sdk.Robot_SideSuctionAngle(
+            self._handle,
+            centroid, box, fetch_mode, fetch_mode_side,
+            sku_num, c_float(dis_y), pose_offset, r_offset,
+            model_mod, c_double(inclx_angle), c_float(container_h), switch_top_bottom_suction,
             byref(x), byref(y), byref(z)
         )
         if ret == 1:

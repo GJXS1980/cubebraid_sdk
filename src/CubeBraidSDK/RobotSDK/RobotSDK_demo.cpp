@@ -163,5 +163,39 @@ int main()
               << "  - Target Z: " << resultPose.z << " mm\n"
               << "========================================\n";
 
+    int fetchMode_side = 3;      // 抓取模式 (1,2: 沿长边抓取; 3,4: 沿短边抓取)
+    float container_h = 2698;      // 集装箱高度
+    bool switch_top_bottom_suction = false;  // 上层/下次侧吸切换标志位 (true: 下层侧吸(酒类), false: 上层侧吸(默认))
+    // 上层侧吸偏移量xyz求解
+    resultPose = RobotController::Side_suction_angle(
+        centroid, box, fetchMode, fetchMode_side, skuNum, disY, 
+        poseOffset, isROffset, modelMod, inclxAngle, container_h, switch_top_bottom_suction
+    );
+
+    std::cout << "输入参数:\n"
+              << "  - 箱体尺寸: " << box.length << " x " << box.width << " x " << box.height << " mm\n"
+              << "  - 倾角: " << inclxAngle << "°\n"
+              << "计算得出的目标机械臂位姿 (mm):\n"
+              << "  - Target X: " << resultPose.x << " mm\n"
+              << "  - Target Y: " << resultPose.y << " mm\n"
+              << "  - Target Z: " << resultPose.z << " mm\n"
+              << "========================================\n";
+
+    // 下层侧吸偏移量xyz求解
+    switch_top_bottom_suction = true;
+    resultPose = RobotController::Side_suction_angle(
+        centroid, box, fetchMode, fetchMode_side, skuNum, disY, 
+        poseOffset, isROffset, modelMod, inclxAngle, container_h, switch_top_bottom_suction
+    );
+
+    std::cout << "输入参数:\n"
+              << "  - 箱体尺寸: " << box.length << " x " << box.width << " x " << box.height << " mm\n"
+              << "  - 倾角: " << inclxAngle << "°\n"
+              << "计算得出的目标机械臂位姿 (mm):\n"
+              << "  - Target X: " << resultPose.x << " mm\n"
+              << "  - Target Y: " << resultPose.y << " mm\n"
+              << "  - Target Z: " << resultPose.z << " mm\n"
+              << "========================================\n";
+
     return 0;
 }

@@ -118,7 +118,7 @@ if __name__ == "__main__":
         )
 
         # 打印计算得到的 XYZ 坐标 (单位: 毫米 mm)
-        print("====== Top Suction Special 计算结果 ======")
+        print("====== Top Suction Angle 计算结果 ======")
         print(f"Target Pose -> X: {x:.3f} mm, Y: {y:.3f} mm, Z: {z:.3f} mm")
         
         # 调用特殊码法顶吸目标位姿计算接口
@@ -136,6 +136,52 @@ if __name__ == "__main__":
 
         # 打印计算得到的 XYZ 坐标 (单位: 毫米 mm)
         print("====== Top Suction Special 计算结果 ======")
+        print(f"Target Pose -> X: {x:.3f} mm, Y: {y:.3f} mm, Z: {z:.3f} mm")
+        
+        # 调用上层侧吸目标位姿计算接口
+        fetch_mode_side = 3      # 抓取模式: 3 或 4 代表沿短边抓取
+        container_h = 2698      # 集装箱高度
+        switch_top_bottom_suction = False      # 上层侧吸
+        x, y, z = robot.side_suction_angle(
+            centroid=centroid,
+            box=box,
+            fetch_mode=fetch_mode,
+            fetch_mode_side=fetch_mode_side,
+            sku_num=sku_num,
+            dis_y=dis_y,
+            pose_offset=pose_offset,
+            r_offset=r_offset,
+            model_mod=model_mod,
+            inclx_angle=inclx_angle,
+            container_h=container_h,
+            switch_top_bottom_suction=switch_top_bottom_suction
+        )
+
+        # 打印计算得到的 XYZ 坐标 (单位: 毫米 mm)
+        print("====== Side Suction Angle 计算结果 ======")
+        print(f"Target Pose -> X: {x:.3f} mm, Y: {y:.3f} mm, Z: {z:.3f} mm")
+        
+        # 调用下层侧吸目标位姿计算接口
+        fetch_mode_side = 3      # 抓取模式: 3 或 4 代表沿短边抓取
+        container_h = 2698      # 集装箱高度
+        switch_top_bottom_suction = True      # 下层侧吸
+        x, y, z = robot.side_suction_angle(
+            centroid=centroid,
+            box=box,
+            fetch_mode=fetch_mode,
+            fetch_mode_side=fetch_mode_side,
+            sku_num=sku_num,
+            dis_y=dis_y,
+            pose_offset=pose_offset,
+            r_offset=r_offset,
+            model_mod=model_mod,
+            inclx_angle=inclx_angle,
+            container_h=container_h,
+            switch_top_bottom_suction=switch_top_bottom_suction
+        )
+
+        # 打印计算得到的 XYZ 坐标 (单位: 毫米 mm)
+        print("====== Side Suction Angle 计算结果 ======")
         print(f"Target Pose -> X: {x:.3f} mm, Y: {y:.3f} mm, Z: {z:.3f} mm")
 
     except Exception as e:
