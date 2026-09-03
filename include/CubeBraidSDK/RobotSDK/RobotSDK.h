@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 
+#include <Eigen/Dense>
+
 // 动态库导出/导入宏定义
 #if defined(_WIN32) || defined(_WIN64)
     #ifdef ROBOT_SDK_EXPORTS
@@ -17,6 +19,10 @@
 
 namespace robot_sdk 
 {
+    #ifndef M_PI
+    #define M_PI 3.14159265358979323846
+    #endif
+
     /**
      * @brief 机器人位姿结构体 (XYZABC,位置（单位：毫米）,姿态（单位：°）)
      */
@@ -177,9 +183,19 @@ namespace robot_sdk
             int model_mod, double inclx_angle, float container_h, bool switch_top_bottom_suction = false
         );
 
+        /**
+         * @brief 计算相对旋转 (ZYZ 顺序欧拉角，输入输出单位：角度 deg)
+         */
+        static Eigen::Vector3d computeDeltaEulerZYZ_deg(
+            const Eigen::Vector3d &euler_before_deg,
+            const Eigen::Vector3d &euler_temp_deg
+        );
+
     private:
         class Impl;
         std::unique_ptr<Impl> pImpl; // PImpl 模式指针，用于隐藏底层通讯细节
+
+        static Eigen::Vector3d matrixToEulerZYZ(const Eigen::Matrix3d &R);
     };
 }
 
@@ -250,6 +266,20 @@ extern "C" {
         int sku_num, float dis_y, robot_sdk::Pose poseOffset, bool ROffset,
         int model_mod, double inclx_angle, float container_h, bool switch_top_bottom_suction,
         double* x, double* y, double* z
+    );
+
+    /**
+     * @brief C API: 计算相对旋转 (ZYZ 顺序欧拉角)
+     * @param euler_before 变换前欧拉角数组 [z1, y, z2] (单位: 度)
+     * @param euler_temp 变换后欧拉角数组 [z1, y, z2] (单位: 度)
+     * @param delta_out 转换结果输出数组 [z1, y, z2] (单位: 度)
+     * @return int 1-成功, 0-失败
+     */
+    ROBOT_API int Robot_ComputeDeltaEulerZYZ(
+        RobotHandle handle,
+        const double euler_before[3],
+        const double euler_temp[3],
+        double delta_out[3]
     );
 
 #ifdef __cplusplus

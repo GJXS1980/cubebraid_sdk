@@ -114,6 +114,15 @@ sdk.Robot_SideSuctionAngle.argtypes = [
     POINTER(c_double), POINTER(c_double), POINTER(c_double) # out x, y, z
 ]
 
+# int Robot_ComputeDeltaEulerZYZ(RobotHandle handle, const double euler_before[3], const double euler_temp[3], double delta_out[3]);
+sdk.Robot_ComputeDeltaEulerZYZ.restype = c_int
+sdk.Robot_ComputeDeltaEulerZYZ.argtypes = [
+    c_void_p,
+    POINTER(c_double), # euler_before
+    POINTER(c_double), # euler_temp
+    POINTER(c_double)  # delta_out
+]
+
 # ============================================================
 # 业务逻辑控制封装类 (Pythonic Wrapper)
 # ============================================================
@@ -258,4 +267,20 @@ class RobotController:
         )
         if ret == 1:
             return (x.value, y.value, z.value)
+        return (0.0, 0.0, 0.0)
+    
+    def compute_delta_euler_zyz_deg(self, euler_before: tuple, euler_temp: tuple) -> tuple:
+        """
+        计算姿态相对旋转 (ZYZ 欧拉角)
+        :param euler_before: 变换前欧拉角 (z1, y, z2) 单位：度
+        :param euler_temp: 变换后欧拉角 (z1, y, z2) 单位：度
+        :return: (z1, y, z2) 变换后结果 tuple (单位：度)
+        """
+        c_before = (c_double * 3)(*euler_before)
+        c_temp = (c_double * 3)(*euler_temp)
+        c_out = (c_double * 3)()
+
+        ret = sdk.Robot_ComputeDeltaEulerZYZ(self._handle, c_before, c_temp, c_out)
+        if ret == 1:
+            return (c_out[0], c_out[1], c_out[2])
         return (0.0, 0.0, 0.0)

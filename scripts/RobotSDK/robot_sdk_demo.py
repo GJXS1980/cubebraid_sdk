@@ -183,6 +183,17 @@ if __name__ == "__main__":
         # 打印计算得到的 XYZ 坐标 (单位: 毫米 mm)
         print("====== Side Suction Angle 计算结果 ======")
         print(f"Target Pose -> X: {x:.3f} mm, Y: {y:.3f} mm, Z: {z:.3f} mm")
+        
+        # 准备角度输入数据 (Z, Y, Z),单位：度
+        euler_before = (10.0, 20.0, 30.0)
+        euler_temp = (5.0, -10.0, 15.0)
+
+        # 计算相对旋转角度
+        delta_deg = robot.compute_delta_euler_zyz_deg(euler_before, euler_temp)
+
+        print("====== ZYZ 欧拉角相对旋转计算结果 ======")
+        print(f"Delta Z1: {delta_deg[0]:.4f}°, Delta Y: {delta_deg[1]:.4f}°, Delta Z2: {delta_deg[2]:.4f}°")
+        
 
     except Exception as e:
         print(f"执行异常: {e}")

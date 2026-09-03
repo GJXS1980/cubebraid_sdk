@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <Eigen/Dense>
 
 using namespace robot_sdk;
 
@@ -196,6 +197,21 @@ int main()
               << "  - Target Y: " << resultPose.y << " mm\n"
               << "  - Target Z: " << resultPose.z << " mm\n"
               << "========================================\n";
+
+    
+    // 角度输入数据 (Z, Y, Z)，单位：度
+    Eigen::Vector3d euler_before(10.0, 20.0, 30.0); 
+    Eigen::Vector3d euler_temp(5.0, -10.0, 15.0);
+
+    // 计算相对旋转角度
+    Eigen::Vector3d delta_deg = robot_sdk::RobotController::computeDeltaEulerZYZ_deg(euler_before, euler_temp);
+
+    // 格式化输出结果
+    std::cout << "====== ZYZ 欧拉角相对旋转计算结果 ======" << std::endl;
+    std::cout << std::fixed << std::setprecision(4);
+    std::cout << "Delta Z1: " << delta_deg[0] << "°, "
+              << "Delta Y: " << delta_deg[1] << "°, "
+              << "Delta Z2: " << delta_deg[2] << "°" << std::endl;
 
     return 0;
 }
