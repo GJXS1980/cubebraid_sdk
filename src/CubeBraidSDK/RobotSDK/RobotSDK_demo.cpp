@@ -122,19 +122,34 @@ int main()
     std::cout << "========== 抓取补偿算法测试 ==========" << std::endl;
 
     // 假设输入参数：质心坐标、SKU 尺寸、相机偏移等
-    Pose centroid{0.45, -0.12, 0.30}; // 米 (算法内部自动换算成 mm)
-    BoxDimension box{400.0f, 300.0f, 200.0f}; // mm
-    Pose poseOffset{5.0, -10.0, 0.0, 0.0, 0.0, 0.0}; // mm
+    Pose centroid{1.46328, 1.52448, -0.611929}; // 基准点，单位米 (算法内部自动换算成 mm)
+    BoxDimension box{570.0f, 453.0f, 330.0f}; // 产品尺寸,单位mm
+    Pose poseOffset{-570.0, -453.0, 330.0, 0.0, 0.0, 0.0}; // 垛型x,y,z偏移量,单位mm
     
-    int fetchMode = 1;      // 吸取长边
-    int skuNum = 2;         // 2 箱抓取
-    float disY = 15.0f;     // 缝隙补偿
-    bool isROffset = true;  // 左侧计算
-    int modelMod = 0;
+    int fetchMode = 3;      // 抓取模式 (1,2: 沿长边抓取; 3,4: 沿短边抓取)
+    int skuNum = 1;         // 并排抓取的 SKU 数量
+    float disY = 75.0f;     // 每层剩余缝隙
+    bool isROffset = true;  // 垛型最左侧标志位 (true: 最左侧, false: 右侧)
+    int modelMod = 0;       // 是否为第一面(0为第一面, 1为其它面)
     double inclxAngle = 0; // 倾角 0°
 
-    // 调用 SDK 算位姿
+    // 顶吸偏移量xyz求解
     Pose resultPose = RobotController::Top_suction_angle(
+        centroid, box, fetchMode, skuNum, disY, 
+        poseOffset, isROffset, modelMod, inclxAngle
+    );
+
+    std::cout << "输入参数:\n"
+              << "  - 箱体尺寸: " << box.length << " x " << box.width << " x " << box.height << " mm\n"
+              << "  - 倾角: " << inclxAngle << "°\n"
+              << "计算得出的目标机械臂位姿 (mm):\n"
+              << "  - Target X: " << resultPose.x << " mm\n"
+              << "  - Target Y: " << resultPose.y << " mm\n"
+              << "  - Target Z: " << resultPose.z << " mm\n"
+              << "========================================\n";
+    
+    // 顶吸特殊码法偏移量xyz求解
+    resultPose = RobotController::Top_suction_special(
         centroid, box, fetchMode, skuNum, disY, 
         poseOffset, isROffset, modelMod, inclxAngle
     );

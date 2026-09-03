@@ -1,4 +1,4 @@
-from robot_sdk import RobotController
+from robot_sdk import RobotController, Pose, BoxDimension
 import time
 
 # ============================================================
@@ -84,3 +84,63 @@ if __name__ == "__main__":
         print("已断开与机械臂的连接。")
     else:
         print("连接机械臂失败，请检查网络设置或机器人控制器状态。")
+        
+    try:
+        # 构造测试数据
+        # 基准点坐标 (单位: 米 m)
+        centroid = Pose(x=1.46328, y=1.52448, z=-0.611929, rx=0.0, ry=0.0, rz=0.0)
+        
+        # 箱体尺寸 (单位: 毫米 mm) -> 长、宽、高
+        box = BoxDimension(length=570.0, width=453.0, height=330.0)
+        
+        # 垛型 JSON 偏移量 (单位: 毫米 mm)
+        pose_offset = Pose(x=-570.0, y=-453.0, z=330.0, rx=0.0, ry=0.0, rz=0.0)
+        
+        # 其他算法入参
+        fetch_mode = 3      # 抓取模式: 3 或 4 代表沿短边抓取
+        sku_num = 1        # 并排抓取 SKU 数量
+        dis_y = 75.0        # 每层剩余缝隙 (mm)
+        r_offset = True     # 垛型最左侧标志位
+        model_mod = 0       # 0: 第一面, 1: 其它面
+        inclx_angle = 0.0  # 倾角仪角度 (<= 0.15°)
+
+        # 调用特殊码法顶吸目标位姿计算接口
+        x, y, z = robot.top_suction_angle(
+            centroid=centroid,
+            box=box,
+            fetch_mode=fetch_mode,
+            sku_num=sku_num,
+            dis_y=dis_y,
+            pose_offset=pose_offset,
+            r_offset=r_offset,
+            model_mod=model_mod,
+            inclx_angle=inclx_angle
+        )
+
+        # 打印计算得到的 XYZ 坐标 (单位: 毫米 mm)
+        print("====== Top Suction Special 计算结果 ======")
+        print(f"Target Pose -> X: {x:.3f} mm, Y: {y:.3f} mm, Z: {z:.3f} mm")
+        
+        # 调用特殊码法顶吸目标位姿计算接口
+        x, y, z = robot.top_suction_special(
+            centroid=centroid,
+            box=box,
+            fetch_mode=fetch_mode,
+            sku_num=sku_num,
+            dis_y=dis_y,
+            pose_offset=pose_offset,
+            r_offset=r_offset,
+            model_mod=model_mod,
+            inclx_angle=inclx_angle
+        )
+
+        # 打印计算得到的 XYZ 坐标 (单位: 毫米 mm)
+        print("====== Top Suction Special 计算结果 ======")
+        print(f"Target Pose -> X: {x:.3f} mm, Y: {y:.3f} mm, Z: {z:.3f} mm")
+
+    except Exception as e:
+        print(f"执行异常: {e}")
+        
+    finally:
+        # 对象销毁时会自动触发 __del__ 内部的 Robot_Destroy，无需显式释放
+        del robot

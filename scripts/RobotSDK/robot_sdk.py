@@ -19,46 +19,90 @@ except OSError as e:
     print(f"动态库加载失败，请检查路径及依赖: {e}")
     sys.exit(1)
 
+# 机器人位姿 (XYZABC,位置（单位：毫米）,姿态（单位：°）)
+class Pose(Structure):
+    _fields_ = [
+        ("x", c_double), ("y", c_double), ("z", c_double),
+        ("rx", c_double), ("ry", c_double), ("rz", c_double)
+    ]
+
+# 箱体/SKU 尺寸结构体 (mm)
+class BoxDimension(Structure):
+    _fields_ = [
+        ("length", c_float), ("width", c_float), ("height", c_float)
+    ]
+
 # ============================================================
 # 声明 C API 函数参数类型与返回值类型
 # ============================================================
-
+# 创建机器人控制器实例
 # RobotHandle Robot_Create();
 sdk.Robot_Create.restype = c_void_p
 sdk.Robot_Create.argtypes = []
 
+# 销毁机器人控制器实例
 # void Robot_Destroy(RobotHandle handle);
 sdk.Robot_Destroy.restype = None
 sdk.Robot_Destroy.argtypes = [c_void_p]
 
+# 连接机器人
 # int Robot_Connect(RobotHandle handle, const char* ip, int motionPort, int statusPort);
 sdk.Robot_Connect.restype = c_int
 sdk.Robot_Connect.argtypes = [c_void_p, c_char_p, c_int, c_int]
 
+# 断开连接
 # void Robot_Disconnect(RobotHandle handle);
 sdk.Robot_Disconnect.restype = None
 sdk.Robot_Disconnect.argtypes = [c_void_p]
 
+# 笛卡尔空间位姿控制
 # int Robot_ControlPosture(RobotHandle handle, int mode, double x, double y, double z, double rx, double ry, double rz);
 sdk.Robot_ControlPosture.restype = c_int
 sdk.Robot_ControlPosture.argtypes = [c_void_p, c_int, c_double, c_double, c_double, c_double, c_double, c_double]
 
+# 关节角度控制
 # int Robot_ControlJoint(RobotHandle handle, int mode, double j1, double j2, double j3, double j4, double j5, double j6);
 sdk.Robot_ControlJoint.restype = c_int
 sdk.Robot_ControlJoint.argtypes = [c_void_p, c_int, c_double, c_double, c_double, c_double, c_double, c_double]
 
+# 获取当前位姿
 # int Robot_GetCurrentPose(RobotHandle handle, double* x, double* y, double* z, double* rx, double* ry, double* rz);
 sdk.Robot_GetCurrentPose.restype = c_int
 sdk.Robot_GetCurrentPose.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
 
+# 获取当前J1-J6关节角度
 # int Robot_GetCurrentJoint(RobotHandle handle, double* j1, double* j2, double* j3, double* j4, double* j5, double* j6);
 sdk.Robot_GetCurrentJoint.restype = c_int
 sdk.Robot_GetCurrentJoint.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
 
+# 获取 J4 关节角度
 # double Robot_GetJoint4Angle(RobotHandle handle, double* j4);
 sdk.Robot_GetJoint4Angle.restype = c_int
 sdk.Robot_GetJoint4Angle.argtypes = [c_void_p, POINTER(c_double)]
 
+# 带倾角补偿的顶吸目标位姿计算
+# int Robot_TopSuctionAngle(RobotHandle handle, robot_sdk::Pose centroid, robot_sdk::BoxDimension box, int fetchMode, int sku_num, float dis_y, 
+                            # robot_sdk::Pose poseOffset, bool ROffset, int model_mod, double inclx_angle, double* x, double* y, double* z);
+sdk.Robot_TopSuctionAngle.restype = c_int
+sdk.Robot_TopSuctionAngle.argtypes = [
+    c_void_p,                                   # handle
+    Pose, BoxDimension, c_int,                  # centroid, box, fetchMode
+    c_int, c_float, Pose, c_bool,               # sku_num, dis_y, poseOffset, ROffset
+    c_int, c_double,                            # model_mod, inclx_angle
+    POINTER(c_double), POINTER(c_double), POINTER(c_double) # out x, y, z
+]
+
+# 带倾角补偿的顶吸目标位姿计算(特殊码法)
+# int Robot_TopSuctionSpecial(RobotHandle handle, robot_sdk::Pose centroid, robot_sdk::BoxDimension box, int fetchMode, int sku_num, float dis_y, 
+                            # robot_sdk::Pose poseOffset, bool ROffset, int model_mod, double inclx_angle, double* x, double* y, double* z);
+sdk.Robot_TopSuctionSpecial.restype = c_int
+sdk.Robot_TopSuctionSpecial.argtypes = [
+    c_void_p,                                   # handle
+    Pose, BoxDimension, c_int,                  # centroid, box, fetchMode
+    c_int, c_float, Pose, c_bool,               # sku_num, dis_y, poseOffset, ROffset
+    c_int, c_double,                            # model_mod, inclx_angle
+    POINTER(c_double), POINTER(c_double), POINTER(c_double) # out x, y, z
+]
 
 # ============================================================
 # 业务逻辑控制封装类 (Pythonic Wrapper)
@@ -152,3 +196,39 @@ class RobotController:
         if ret == 1:
             return j4.value
         return 0.0
+    
+    def top_suction_angle(self, centroid: Pose, box: BoxDimension, fetch_mode: int, sku_num: int, dis_y: float, pose_offset: Pose, r_offset: bool,
+                            model_mod: int, inclx_angle: float) -> tuple:
+        """
+        带倾角补偿的顶吸目标位姿计算
+        :return: 装柜目标位置 (x, y, z)
+        """
+        x, y, z = c_double(), c_double(), c_double()
+        ret = sdk.Robot_TopSuctionAngle(
+            self._handle,
+            centroid, box, fetch_mode,
+            sku_num, c_float(dis_y), pose_offset, r_offset,
+            model_mod, c_double(inclx_angle),
+            byref(x), byref(y), byref(z)
+        )
+        if ret == 1:
+            return (x.value, y.value, z.value)
+        return (0.0, 0.0, 0.0)
+        
+    def top_suction_special(self, centroid: Pose, box: BoxDimension, fetch_mode: int, sku_num: int, dis_y: float, pose_offset: Pose, r_offset: bool,
+                            model_mod: int, inclx_angle: float) -> tuple:
+        """
+        带倾角补偿的顶吸目标位姿计算(特殊码法)
+        :return: 装柜目标位置 (x, y, z)
+        """
+        x, y, z = c_double(), c_double(), c_double()
+        ret = sdk.Robot_TopSuctionSpecial(
+            self._handle,
+            centroid, box, fetch_mode,
+            sku_num, c_float(dis_y), pose_offset, r_offset,
+            model_mod, c_double(inclx_angle),
+            byref(x), byref(y), byref(z)
+        )
+        if ret == 1:
+            return (x.value, y.value, z.value)
+        return (0.0, 0.0, 0.0)
