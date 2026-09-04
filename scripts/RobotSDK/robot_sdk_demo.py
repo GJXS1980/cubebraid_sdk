@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from robot_sdk import RobotController, Pose, BoxDimension
 import time
 
