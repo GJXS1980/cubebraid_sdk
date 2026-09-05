@@ -105,6 +105,7 @@ namespace camera3d_sdk
         * @brief 机器人在集装箱里面和斜坡上基准点的计算
         * 
         * @param calib_pose 相机手眼标定外参位姿 (包含 x, y, z, qw, qx, qy, qz)
+        * @param cameraIP 相机IP
         * @param model_mod 第一面顶吸基准点(0),其它面基准点(1)
         * @param agv_x AGV导航时距离前方距离
         * @param agv_y AGV导航时距离左侧距离
@@ -129,6 +130,7 @@ namespace camera3d_sdk
         * @brief 机器人在最后一面侧吸基准点的计算
         * 
         * @param calib_pose 相机手眼标定外参位姿
+        * @param cameraIP 相机IP
         * @param agv_x AGV导航时距离前方距离
         * @param agv_y AGV导航时距离左侧距离
         * @param j1_angle 装卸一体模式下,AGV拍照时一轴的关节角(单位：度，只有在装卸一体模式下才生效)
@@ -149,6 +151,7 @@ namespace camera3d_sdk
         * @brief 计算加强筋的法向,算出AGV航向角偏差
         * 
         * @param calib_pose 相机手眼标定外参位姿
+        * @param cameraIP 相机IP
         * @param slam_x AGV导航时距离前方距离
         * @param slam_y AGV导航时距离左侧距离
         * @param j1_angle 装卸一体模式下,AGV拍照时一轴的关节角(单位：度，只有在装卸一体模式下才生效)
