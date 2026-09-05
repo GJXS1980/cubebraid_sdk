@@ -1,111 +1,104 @@
 #include <iostream>
 #include <iomanip>
-#include <vector>
-#include "CubeBraidSDK/CameraSDK/CameraSDK.h"
+#include "CubeBraidSDK/CameraSDK/CameraSDK.h" // 替换为你实际的头文件名称
 
-using namespace camera3d_sdk;
-
-// 辅助打印错误函数
-void printError(Camera3D& camera, StatusCode status, const std::string& action) {
-    std::cerr << "[FAIL] " << action << " 失败!" << std::endl;
-    std::cerr << "  - 错误码: " << static_cast<int>(status) 
-              << " (" << statusToString(status) << ")" << std::endl;
-    std::cerr << "  - 详细信息: " << camera.getLastError() << std::endl;
-}
-
-int main() 
+int main()
 {
-    std::cout << "================ C++ Camera3D SDK Demo ================\n";
-    Camera3D camera;
+    std::cout << "=== Camera3D C++ SDK Demo 启动 ===" << std::endl;
+    camera3d_sdk::Camera3D camera;
 
-    // 结构体初始化配置
-    CameraConfig config;
-    config.camera_ip = "192.168.23.203";
-    config.camera_ip_up = "192.168.23.88";
-    config.depth_file = "./data/img/depth.tiff";
-    config.color_file = "./data/img/demo.png";
-    config.corner_model_path = "./data/models/corner_model.onnx";
-    config.box_model_path = "./data/models/box_model.onnx";
+    // 配置相机参数
+    std::string camera_ip = "192.168.23.203"; 
 
-    StatusCode status = camera.initialize(config);
-    if (status != StatusCode::SUCCESS) {
-        printError(camera, status, "初始化 SDK");
-        return -1;
-    }
-    std::cout << "[SUCCESS] SDK 初始化完成." << std::endl;
+    // 准备算法输入参数
+    // 手眼标定参数示例
+    camera3d_sdk::CalibrationPose calib_pose;
+    calib_pose.x = 0.107419f;
+    calib_pose.y = 1.03611f;
+    calib_pose.z = 0.23078f;
+    calib_pose.qw = -0.4595f;
+    calib_pose.qx = 0.595359f;
+    calib_pose.qy = -0.519468f;
+    calib_pose.qz = 0.405645f;
 
-    // 2. 建立连接
-    if (!camera.connect()) {
-        std::cerr << "[FAIL] 相机连接失败: " << camera.getLastError() << std::endl;
-        return -1;
-    }
-    std::cout << "[SUCCESS] 相机连接成功, 状态: " << (camera.isConnected() ? "在线" : "离线") << std::endl;
+    // 常用 AGV / 模式参数
+    const float agv_x = 1.643f;                    // AGV 前方距离
+    const float agv_y = 0.387f;                    // AGV 左侧距离
+    const float angle = 0.3f;                     // 倾角仪角度
+    const float j1_angle = 15.0f;                 // 一轴关节角
+    const bool integrated_mode = false;          // false: 摆台模式, true: 装卸一体模式
 
-    // 3. 参数配置
-    camera.setCameraMode(1);
-    camera.setDistance(1.5);
-    camera.setDepthDistance(2.0);
+    // ------------------------------------------------------------
+    // 调用算法接口 1: 集装箱内部/斜坡基准点计算 (processTradition)
+    // ------------------------------------------------------------
+    std::cout << "\n--- 执行：集装箱内/斜坡基准点计算 ---" << std::endl;
+    camera3d_sdk::Point3D tradition_result;
+    camera.processTradition(
+        calib_pose,
+        camera_ip,
+        0,                 // model_mod: 0-第一面顶吸基准点, 1-其它面
+        agv_x,
+        agv_y,
+        angle,
+        j1_angle,
+        integrated_mode,
+        tradition_result
+    );
 
-    std::cout << "[SUCCESS] 参数初始化完成." << std::endl;
+    std::cout << std::fixed << std::setprecision(3);
+    std::cout << "[SUCCESS] 传统基准点计算结果 -> X: " << tradition_result.x 
+                << " m, Y: " << tradition_result.y 
+                << " m, Z: " << tradition_result.z << " m" << std::endl;
 
-    // 机器人外参
-    double robot_matrix[16] = 
-    {
-        1.0, 0.0, 0.0, 0.2,
-        0.0, 1.0, 0.0, 0.1,
-        0.0, 0.0, 1.0, 0.5,
-        0.0, 0.0, 0.0, 1.0
-    };
-    status = camera.setRobotTransform(robot_matrix);
-    std::cout << "[SUCCESS] 相机到机器人变换完成." << std::endl;
-    if (status != StatusCode::SUCCESS) 
-    {
-        printError(camera, status, "设置变换矩阵");
-    }
+    // ------------------------------------------------------------
+    // 调用算法接口 2: 最后一面侧吸基准点计算 (processLastSurface)
+    // ------------------------------------------------------------
+    std::cout << "\n--- 执行：最后一面侧吸基准点计算 ---" << std::endl;
+    camera3d_sdk::Point3D last_surface_result;
+    camera.processLastSurface(
+        calib_pose,
+        camera_ip,
+        agv_x,
+        agv_y,
+        j1_angle,
+        integrated_mode,
+        last_surface_result
+    );
 
-    // 4. 算法业务调用
-    Point3D result_pt;
-    std::cout << "[SUCCESS] 开始普通基准点识别." << std::endl;
-    
-    // 4.1 普通基准点算法
-    status = camera.processTradition(1, 0, 10.5f, 5.2f, result_pt);
+    std::cout << "[SUCCESS] 最后一面基准点计算结果 -> X: " << last_surface_result.x 
+        << " m, Y: " << last_surface_result.y 
+        << " m, Z: " << last_surface_result.z << " m" << std::endl;
 
-    std::cout << "[SUCCESS] 普通基准点识别完成." << std::endl;
-    if (status == StatusCode::SUCCESS) 
-    {
-        std::cout << "-> [Tradition] 结果: X=" << result_pt.x << ", Y=" << result_pt.y << ", Z=" << result_pt.z << std::endl;
-    } 
-    else 
-    {
-        printError(camera, status, "执行 processTradition");
-    }
+    // ------------------------------------------------------------
+    // 调用算法接口 3: 航向角偏差计算 (processYaw)
+    // ------------------------------------------------------------
+    // 配置相机参数
+    std::string camera_ip_up = "192.168.23.203"; 
 
-    // 4.2 坡度场景算法
-    status = camera.processSlope(1, 0, 10.5f, 5.2f, 15.0f, result_pt);
-    if (status == StatusCode::SUCCESS) 
-    {
-        std::cout << "-> [Slope] 结果: X=" << result_pt.x << ", Y=" << result_pt.y << ", Z=" << result_pt.z << std::endl;
-    } 
-    else 
-    {
-        printError(camera, status, "执行 processSlope");
-    }
+    // 手眼标定参数示例
+    camera3d_sdk::CalibrationPose calib_pose_up;
+    calib_pose_up.x = 0.107419f;
+    calib_pose_up.y = 1.03611f;
+    calib_pose_up.z = 0.23078f;
+    calib_pose_up.qw = -0.4595f;
+    calib_pose_up.qx = 0.595359f;
+    calib_pose_up.qy = -0.519468f;
+    calib_pose_up.qz = 0.405645f;
 
-    // 4.3 Yaw 角计算
-    double yaw_angle = 0.0;
-    status = camera.processYaw(1, 12.3f, 4.5f, yaw_angle);
-    if (status == StatusCode::SUCCESS) 
-    {
-        std::cout << "-> [Yaw] 计算结果: " << yaw_angle << " rad" << std::endl;
-    } 
-    else 
-    {
-        printError(camera, status, "执行 processYaw");
-    }
+    std::cout << "\n--- 执行：AGV 航向角偏差计算 ---" << std::endl;
+    double yaw_bias = 0.0;
+    camera.processYaw(
+        calib_pose_up,
+        camera_ip_up,
+        agv_x,
+        agv_y,
+        j1_angle,
+        integrated_mode,
+        yaw_bias
+    );
 
-    // 5. 断开资源
-    camera.disconnect();
-    std::cout << "[SUCCESS] 相机断开连接.\n";
+    std::cout << std::setprecision(4);
+    std::cout << "[SUCCESS] 偏航角偏差 (Yaw): " << yaw_bias << " 度" << std::endl;
 
     return 0;
 }
