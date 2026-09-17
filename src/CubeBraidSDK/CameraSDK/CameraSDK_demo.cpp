@@ -13,20 +13,20 @@ int main()
     // 准备算法输入参数
     // 手眼标定参数示例
     camera3d_sdk::CalibrationPose calib_pose;
-    calib_pose.x = 0.107419f;
-    calib_pose.y = 1.03611f;
-    calib_pose.z = 0.23078f;
-    calib_pose.qw = -0.4595f;
-    calib_pose.qx = 0.595359f;
-    calib_pose.qy = -0.519468f;
-    calib_pose.qz = 0.405645f;
+    calib_pose.x = 0.0729192f;
+    calib_pose.y = -0.2451257f;
+    calib_pose.z = 0.5571790f;
+    calib_pose.qw = -0.6251f;
+    calib_pose.qx = 0.1534f;
+    calib_pose.qy = 0.3531f;
+    calib_pose.qz = -0.6791f;
 
     // 常用 AGV / 模式参数
-    const float agv_x = 1.643f;                    // AGV 前方距离
-    const float agv_y = 0.387f;                    // AGV 左侧距离
-    const float angle = 0.3f;                     // 倾角仪角度
-    const float j1_angle = 15.0f;                 // 一轴关节角
-    const bool integrated_mode = false;          // false: 摆台模式, true: 装卸一体模式
+    const float agv_x = 1.348f;                    // AGV 前方距离
+    const float agv_y = 0.395f;                    // AGV 左侧距离
+    const float angle = 1.35f;                     // 倾角仪角度
+    const float j1_angle = -155.69f;                 // 一轴关节角
+    const bool integrated_mode = true;          // false: 摆台模式, true: 装卸一体模式
 
     // ------------------------------------------------------------
     // 调用算法接口 1: 集装箱内部/斜坡基准点计算 (processTradition)
@@ -73,17 +73,17 @@ int main()
     // 调用算法接口 3: 航向角偏差计算 (processYaw)
     // ------------------------------------------------------------
     // 配置相机参数
-    std::string camera_ip_up = "192.168.23.203"; 
+    std::string camera_ip_up = "192.168.23.88"; 
 
     // 手眼标定参数示例
     camera3d_sdk::CalibrationPose calib_pose_up;
-    calib_pose_up.x = 0.107419f;
-    calib_pose_up.y = 1.03611f;
-    calib_pose_up.z = 0.23078f;
-    calib_pose_up.qw = -0.4595f;
-    calib_pose_up.qx = 0.595359f;
-    calib_pose_up.qy = -0.519468f;
-    calib_pose_up.qz = 0.405645f;
+    calib_pose_up.x = 0.0336826f;
+    calib_pose_up.y = 0.5748234f;
+    calib_pose_up.z = 0.6218667f;
+    calib_pose_up.qw = -0.6598f;
+    calib_pose_up.qx =  0.2489f;
+    calib_pose_up.qy =  0.2568f;
+    calib_pose_up.qz = -0.6609f;
 
     std::cout << "\n--- 执行：AGV 航向角偏差计算 ---" << std::endl;
     double yaw_bias = 0.0;
