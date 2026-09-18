@@ -11,7 +11,7 @@ lib_path = os.path.dirname(os.path.abspath(__file__))
 if sys.platform.startswith("win"):
     lib_name = os.path.join(lib_path, "../../bin/RobotSDK.dll")
 else:
-    lib_name = os.path.join(lib_path, "../../bin/libRobotSDK.so")
+    lib_name = os.path.join(lib_path, "../../lib/linux/libRobotSDK.so")
 
 try:
     sdk = ctypes.CDLL(lib_name)

@@ -45,7 +45,7 @@ class AGVClient:
             if sys.platform.startswith("win"):
                 lib_path = os.path.abspath("../../bin/AGV_SDK.dll")
             else:
-                lib_path = os.path.abspath("./libagv_sdk.so")
+                lib_path = os.path.abspath("../../lib/linux/libAGV_SDK.so")
 
         if not os.path.exists(lib_path):
             raise FileNotFoundError(f"找不到动态链接库文件: {lib_path}")

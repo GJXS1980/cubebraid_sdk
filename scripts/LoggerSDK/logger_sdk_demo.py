@@ -45,9 +45,13 @@ class LoggerSDK:
 # 测试调用主程序
 if __name__ == "__main__":
     # 根据操作系统匹配动态库后缀
-    dll_name = "../../bin/LoggerSDK.dll" if sys.platform == "win32" else "libLoggerSDK.so"
-    # 此处替换为你生成的 dll / so 文件放置路径
-    dll_path = os.path.join(os.path.dirname(__file__), dll_name)
+    if sys.platform.startswith("win"):
+        dll_path = os.path.abspath("../../bin/LoggerSDK.dll")
+    else:
+        dll_path = os.path.abspath("../../lib/linux/libLoggerSDK.so")
+
+    if not os.path.exists(dll_path):
+        raise FileNotFoundError(f"找不到动态链接库文件: {dll_path}")
 
     try:
         # 实例化并初始化 SDK

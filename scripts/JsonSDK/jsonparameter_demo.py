@@ -1,6 +1,8 @@
+import sys
+
 from jsonparameter import JsonParameterSDK
 
-sdk = JsonParameterSDK(r"../../bin/JsonParameterSDK.dll")
+sdk = JsonParameterSDK()
 
 # 手眼标定
 pose = sdk.get_calibration(r"./data/json/Hand-eye_calibration_parameters.json", 0)

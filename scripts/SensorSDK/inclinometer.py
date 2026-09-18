@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import ctypes
+import sys
 import os
 
 class Inclinometer:
@@ -13,13 +14,19 @@ class Inclinometer:
     调用：
         ctypes
     """
-    def __init__(self, dll_path):
-        dll_path = os.path.abspath(dll_path)
-        if not os.path.exists(dll_path):
-            raise FileNotFoundError("找不到 DLL: {}".format(dll_path))
+    def __init__(self, dll_path=None):
+        if dll_path is None:
+            if sys.platform.startswith("win"):
+                dll_path = os.path.abspath("../../bin/InclinometerSDK.dll")
+            else:
+                dll_path = os.path.abspath("../../lib/linux/libInclinometerSDK.so")
 
-        # Windows DLL
+            if not os.path.exists(dll_path):
+                raise FileNotFoundError(f"找不到动态链接库文件: {dll_path}")
+
         self.dll = ctypes.CDLL(dll_path)
+        
+        
         self._setup_functions()
         self.handle = (self.dll.Inclinometer_Create())
 

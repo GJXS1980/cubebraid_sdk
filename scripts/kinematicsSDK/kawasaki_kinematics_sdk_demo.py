@@ -4,14 +4,14 @@ import os
 import platform
 import sys
 
-
 # 自动定位编译生成的动态库路径
-system_name = platform.system()
-is_win = system_name == "Windows"
+if sys.platform.startswith("win"):
+    dll_path = os.path.abspath("../../bin/KawasakiKinematicsSDK.dll")
+else:
+    dll_path = os.path.abspath("../../lib/linux/libKawasakiKinematicsSDK.so")
 
-dll_name = "../../bin/KawasakiKinematicsSDK.dll" if sys.platform == "win32" else "libKawasakiKinematicsSDK.so"
-# 此处替换为你生成的 dll / so 文件放置路径
-dll_path = os.path.join(os.path.dirname(__file__), dll_name)
+if not os.path.exists(dll_path):
+    raise FileNotFoundError(f"找不到动态链接库文件: {dll_path}")
 
 lib = ctypes.CDLL(dll_path)
 

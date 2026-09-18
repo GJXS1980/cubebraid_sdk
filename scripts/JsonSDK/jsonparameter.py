@@ -1,6 +1,6 @@
 import ctypes
 import os
-
+import sys
 
 class CalibrationPose(ctypes.Structure):
     _fields_ = [
@@ -97,16 +97,15 @@ class JsonParameterSDK:
     def __init__(self, dll_path=None):
 
         if dll_path is None:
-            current_dir = os.path.dirname(
-                os.path.abspath(__file__)
-            )
+            if sys.platform.startswith("win"):
+                dll_path = os.path.abspath("../../bin/JsonParameterSDK.dll")
+            else:
+                dll_path = os.path.abspath("../../lib/linux/libJsonParameterSDK.so")
 
-            dll_path = os.path.join(
-                current_dir,
-                "JsonParameterSDK.dll"
-            )
+            if not os.path.exists(dll_path):
+                raise FileNotFoundError(f"找不到动态链接库文件: {dll_path}")
 
-        self.dll = ctypes.WinDLL(dll_path)
+        self.dll = ctypes.CDLL(dll_path)
 
         self._init_functions()
 

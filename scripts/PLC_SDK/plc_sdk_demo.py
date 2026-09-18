@@ -7,7 +7,6 @@ from ctypes import Structure, c_double, c_float, c_int, c_int16, c_bool, c_char_
 # =================================================================
 # 数据结构映射 (#pragma pack(push, 1) 紧凑对齐)
 # =================================================================
-
 class PLCStatus(Structure):
     _pack_ = 1  # 对应 C 语言 #pragma pack(push, 1)
     _fields_ = [
@@ -41,60 +40,62 @@ class PickUpData(Structure):
 lib_path = os.path.dirname(os.path.abspath(__file__))
 
 if sys.platform.startswith("win"):
-    # PLC SDK 主DLL (保留相对路径格式)
     plc_sdk_path = "../../bin/PLC_SDK.dll"
-    # snap7 DLL
     snap7_path = "../../bin/snap7.dll"
+    
+else:
+    plc_sdk_path = "../../lib/linux/libPLC_SDK.so"
+    snap7_path = "../../lib/linux/libsnap7.so"
 
-    # 将相对路径基于当前文件位置解析，并转为绝对路径
-    plc_sdk_abs_path = os.path.abspath(os.path.join(lib_path, plc_sdk_path))
-    snap7_abs_path = os.path.abspath(os.path.join(lib_path, snap7_path))
+# 将相对路径基于当前文件位置解析，并转为绝对路径
+plc_sdk_abs_path = os.path.abspath(os.path.join(lib_path, plc_sdk_path))
+snap7_abs_path = os.path.abspath(os.path.join(lib_path, snap7_path))
 
-    # 检查文件是否存在
-    if not os.path.isfile(plc_sdk_abs_path):
-        print(f"\n找不到 PLC_SDK.dll: {plc_sdk_abs_path}\n")
-        sys.exit(1)
-    if not os.path.isfile(snap7_abs_path):
-        print(f"\n找不到 snap7.dll: {snap7_abs_path}\n")
-        sys.exit(1)
+# 检查文件是否存在
+if not os.path.isfile(plc_sdk_abs_path):
+    print(f"\n找不到 PLC_SDK.dll: {plc_sdk_abs_path}\n")
+    sys.exit(1)
+if not os.path.isfile(snap7_abs_path):
+    print(f"\n找不到 snap7.dll: {snap7_abs_path}\n")
+    sys.exit(1)
 
-    # 获取 DLL 所在的文件夹（绝对路径）
-    plc_sdk_dir = os.path.dirname(plc_sdk_abs_path)
-    snap7_dir = os.path.dirname(snap7_abs_path)
+# 获取 DLL 所在的文件夹（绝对路径）
+plc_sdk_dir = os.path.dirname(plc_sdk_abs_path)
+snap7_dir = os.path.dirname(snap7_abs_path)
 
-    # 添加 DLL 搜索目录
-    dll_dirs = []
-    if hasattr(os, "add_dll_directory"):
-        # os.add_dll_directory 必须接收绝对路径
-        handle1 = os.add_dll_directory(plc_sdk_dir)
-        dll_dirs.append(handle1)
+# 添加 DLL 搜索目录
+dll_dirs = []
+if hasattr(os, "add_dll_directory"):
+    # os.add_dll_directory 必须接收绝对路径
+    handle1 = os.add_dll_directory(plc_sdk_dir)
+    dll_dirs.append(handle1)
+    
+    if snap7_dir != plc_sdk_dir:
+        handle2 = os.add_dll_directory(snap7_dir)
+        dll_dirs.append(handle2)
         
-        if snap7_dir != plc_sdk_dir:
-            handle2 = os.add_dll_directory(snap7_dir)
-            dll_dirs.append(handle2)
-            
-        print("\n已添加 DLL 搜索目录:")
-        print(f"相对路径: {os.path.dirname(plc_sdk_path)} -> 映射为绝对路径: {plc_sdk_dir}")
+    print("\n已添加 DLL 搜索目录:")
+    print(f"相对路径: {os.path.dirname(plc_sdk_path)} -> 映射为绝对路径: {plc_sdk_dir}")
 
-    # 先加载 snap7.dll
-    try:
-        print("\n正在加载 snap7.dll...")
-        snap7 = ctypes.CDLL(snap7_abs_path)
-        print("snap7.dll 加载成功!")
-    except OSError as e:
-        print("\nsnap7.dll 加载失败!")
-        print(f"错误信息: {e}")
-        sys.exit(1)
+# 先加载 snap7.dll
+try:
+    print("\n正在加载 snap7.dll...")
+    snap7 = ctypes.CDLL(snap7_abs_path)
+    print("snap7.dll 加载成功!")
+except OSError as e:
+    print("\nsnap7.dll 加载失败!")
+    print(f"错误信息: {e}")
+    sys.exit(1)
 
-    # 再加载 PLC_SDK.dll
-    try:
-        print("\n正在加载 PLC_SDK.dll...")
-        sdk = ctypes.CDLL(plc_sdk_abs_path)
-        print("PLC_SDK.dll 加载成功!")
-    except OSError as e:
-        print("\nPLC_SDK.dll 加载失败!")
-        print(f"错误信息: {e}")
-        sys.exit(1)
+# 再加载 PLC_SDK.dll
+try:
+    print("\n正在加载 PLC_SDK.dll...")
+    sdk = ctypes.CDLL(plc_sdk_abs_path)
+    print("PLC_SDK.dll 加载成功!")
+except OSError as e:
+    print("\nPLC_SDK.dll 加载失败!")
+    print(f"错误信息: {e}")
+    sys.exit(1)
 
 # 声明生命周期接口
 sdk.plc_create.restype = c_void_p

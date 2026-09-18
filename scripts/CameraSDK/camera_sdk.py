@@ -59,37 +59,96 @@ class Camera3DSDK:
         初始化并加载动态库
         :param lib_path: 动态库文件的自定义路径，若不传则自动根据系统类型推导相对路径
         """
-        # 获取当前脚本所在目录
         curr_dir = os.path.dirname(os.path.abspath(__file__))
 
         if sys.platform.startswith("win"):
-            # 1. 动态推导并注册依赖项所在的 bin 目录
-            # (如果需要写死，也可替换为 bin_dir = r"D:\demo\cubebraid_sdk\bin")
-            bin_dir = os.path.abspath(os.path.join(curr_dir, r"D:\demo\dll"))
-            
+            # ================= Windows 平台适配 =================
+            bin_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos")) 
+
+            # 1. 注册 DLL 搜寻路径 (Python 3.8+)
             if hasattr(os, "add_dll_directory") and os.path.exists(bin_dir):
                 os.add_dll_directory(bin_dir)
 
-            # 2. 拼接完整的 DLL 路径
+            # 同时将目录加入 PATH 环境变量以确保 C++ 间接依赖项也能正常查找
+            os.environ["PATH"] = bin_dir + os.path.pathsep + os.environ.get("PATH", "")
+
+            # 2. 确定主动态库路径
             if lib_path is None:
                 lib_name = os.path.join(bin_dir, "CameraSDK.dll")
             else:
                 lib_name = lib_path
-        else:
+
+        elif sys.platform.startswith("linux"):
+            # ================= Ubuntu / Linux 平台适配 =================
+            lib_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos/camera_so"))
+
+            # 1. 预先遍历并载入 lib_dir 目录下所有的 .so 库到全局符号表，彻底解决 undefined symbol 报错
+            self._load_all_so_in_dir(lib_dir)
+
+            # 2. 确定主动态库路径
             if lib_path is None:
-                lib_name = os.path.join(curr_dir, "../../bin/libCameraSDK.so")
+                lib_name = os.path.join(lib_dir, "libCameraSDK.so")
             else:
                 lib_name = lib_path
 
-        # 加载 C++ SDK 动态库
+        else:
+            raise OSError(f"暂不支持的操作系统: {sys.platform}")
+
+        # 3. 加载 C++ SDK 动态库
         try:
-            self._dll = ctypes.CDLL(os.path.abspath(lib_name))
+            abs_lib_path = os.path.abspath(lib_name)
+            if not os.path.exists(abs_lib_path):
+                raise FileNotFoundError(f"未找到指定的动态库文件: {abs_lib_path}")
+
+            # Linux 上加载主动态库时同样开启 RTLD_GLOBAL
+            if sys.platform.startswith("linux"):
+                self._dll = ctypes.CDLL(abs_lib_path, mode=ctypes.RTLD_GLOBAL)
+            else:
+                self._dll = ctypes.CDLL(abs_lib_path)
+
+            print(f"成功加载动态库: {abs_lib_path}")
         except OSError as e:
-            print(f"动态库加载失败，请检查路径及依赖: {e}")
+            print(f"动态库加载失败，请检查路径及依赖项! 详细错误: {e}")
             sys.exit(1)
 
         self._handle = None
         self._bind_functions()
+
+    def _load_all_so_in_dir(self, lib_dir: str):
+        """
+        Ubuntu Linux 专属：遍历加载指定目录下所有的 .so 文件，
+        并使用 RTLD_GLOBAL 将全部符号暴露到全局符号表中，解决未定义符号问题
+        """
+        if not os.path.exists(lib_dir):
+            return
+
+        # 1. 获取目录下所有 .so 动态链接库文件
+        so_files = [
+            f for f in os.listdir(lib_dir) 
+            if (f.endswith(".so") or ".so." in f) and f != "libCameraSDK.so"
+        ]
+
+        # 2. 循环加载，采用多轮加载机制（处理 .so 之间相互依赖的先后顺序问题）
+        loaded_libs = set()
+        max_attempts = 3  # 最多重试 3 轮解决依赖顺序
+
+        for attempt in range(max_attempts):
+            progress = False
+            for so_file in list(so_files):
+                so_path = os.path.join(lib_dir, so_file)
+                try:
+                    # 使用 RTLD_GLOBAL 让加载的符号对其他后续库均可见
+                    ctypes.CDLL(so_path, mode=ctypes.RTLD_GLOBAL)
+                    loaded_libs.add(so_file)
+                    so_files.remove(so_file)
+                    progress = True
+                except OSError:
+                    # 本轮加载失败可能是因为它依赖的另一个 .so 还未加载，留到下一轮重试
+                    pass
+            
+            # 如果这一轮没有任何新的 .so 加载成功，跳出循环
+            if not progress:
+                break
 
     def _bind_functions(self):
         """绑定 C 导出接口的参数与返回值类型 (与 C-API 头文件严格对应)"""
