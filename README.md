@@ -1,4 +1,4 @@
-# 编译说明
+# Windows编译说明
 ## 1. 创建并进入构建目录
 ```bash
 mkdir build
@@ -14,6 +14,35 @@ cmake -G "Visual Studio 17 2022" -A x64 ..
 ```
 
 ## 3. 进入build文件夹打开 cubebraid_sdk.sln 进行demo程序编译
+
+# Ubuntu 编译说明
+## 安装依赖
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake
+```
+## 创建并进入构建目录
+```bash
+mkdir build
+cd build
+```
+## 编译项目
+```bash
+# 用 CMake 生成 Makefile
+cmake -DCMAKE_BUILD_TYPE=Release ..
+
+# 编译 Demo 程序
+# 使用 make 进行编译（-j4 表示使用 4 个 CPU 核心并行编译，可根据实际配置调整）
+make -j4
+
+# 运行 Demo 程序
+# 进入 Demo 输出目录
+cd SDK_Demos
+
+# 运行对应的 Demo（以 logger_demo 为例）
+./logger_demo
+```
+
 
 # SDK API说明
 

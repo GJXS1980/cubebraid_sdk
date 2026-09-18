@@ -10,6 +10,9 @@
 // Linux:
 //   直接使用空定义。
 // ============================================================
+// ============================================================
+// DLL / SO 导出宏修订
+// ============================================================
 #ifdef _WIN32
     #ifdef PARAMETER_SDK_EXPORTS
         #define KAWASAKI_SDK_API __declspec(dllexport)
@@ -17,7 +20,11 @@
         #define KAWASAKI_SDK_API __declspec(dllimport)
     #endif
 #else
-    #define KAWASAKI_SDK_API
+    #if __GNUC__ >= 4
+        #define KAWASAKI_SDK_API __attribute__((visibility("default")))
+    #else
+        #define KAWASAKI_SDK_API
+    #endif
 #endif
 
 #include <vector>

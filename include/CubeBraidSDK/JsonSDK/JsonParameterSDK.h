@@ -19,7 +19,11 @@
         #define JSONPARAMETER_SDK_API __declspec(dllimport)
     #endif
 #else
-    #define JSONPARAMETER_SDK_API
+    #if __GNUC__ >= 4
+        #define JSONPARAMETER_SDK_API __attribute__((visibility("default")))
+    #else
+        #define JSONPARAMETER_SDK_API
+    #endif
 #endif
 
 

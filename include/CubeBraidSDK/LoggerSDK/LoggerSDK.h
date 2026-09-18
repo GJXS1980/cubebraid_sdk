@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-// --- 防御性定义 LOGGER_API 宏 ---
+// --- 修改 LOGGER_API 宏定义 ---
 #ifndef LOGGER_API
     #if defined(_WIN32) || defined(_WIN64)
         #ifdef LOGGER_EXPORTS
@@ -9,7 +9,11 @@
             #define LOGGER_API __declspec(dllimport)
         #endif
     #else
-        #define LOGGER_API
+        #if __GNUC__ >= 4
+            #define LOGGER_API __attribute__((visibility("default")))
+        #else
+            #define LOGGER_API
+        #endif
     #endif
 #endif
 

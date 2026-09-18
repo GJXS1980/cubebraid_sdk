@@ -12,7 +12,11 @@
         #define PLC_SDK_API __declspec(dllimport)
     #endif
 #else
-    #define PLC_SDK_API __attribute__((visibility("default")))
+    #if defined(PLC_SDK_EXPORTS)
+        #define PLC_SDK_API __attribute__((visibility("default")))
+    #else
+        #define PLC_SDK_API
+    #endif
 #endif
 
 // =================================================================

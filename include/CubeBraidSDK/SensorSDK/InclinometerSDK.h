@@ -3,6 +3,18 @@
 
 #include <string>
 
+
+//======================================================================
+// SDK 导出宏
+//
+// Windows：
+//   DLL 编译时使用 __declspec(dllexport)
+//   DLL 使用时使用 __declspec(dllimport)
+//
+// Linux：
+//   SO 使用 visibility("default") 导出
+//======================================================================
+
 #ifdef _WIN32
 
     #ifdef INCLINOMETER_SDK_EXPORTS
@@ -13,7 +25,7 @@
 
 #else
 
-    #define INCLINOMETER_API
+    #define INCLINOMETER_API __attribute__((visibility("default")))
 
 #endif
 
@@ -57,8 +69,11 @@ struct InclinometerConfig
     /**
      * @brief 串口
      *
-     * 例如：
+     * Windows 例如：
      * "\\\\.\\COM7"
+     *
+     * Linux 例如：
+     * "/dev/ttyUSB0"
      */
     std::string port;
 
@@ -84,6 +99,12 @@ struct InclinometerConfig
 
     /**
      * @brief CSV保存目录
+     *
+     * Windows 例如：
+     * "data\\DXL360S"
+     *
+     * Linux 例如：
+     * "data/DXL360S"
      */
     std::string csvDirectory;
 
@@ -92,7 +113,14 @@ struct InclinometerConfig
      */
     int saveIntervalMs;
 
+
+    /**
+     * @brief 默认构造函数
+     *
+     * 根据不同操作系统设置默认串口和CSV目录。
+     */
     InclinometerConfig()
+#ifdef _WIN32
         : port("\\\\.\\COM7")
         , baudRate(9600)
         , autoReconnect(true)
@@ -100,6 +128,15 @@ struct InclinometerConfig
         , enableCsvSave(false)
         , csvDirectory("data\\DXL360S")
         , saveIntervalMs(100)
+#else
+        : port("/dev/ttyUSB0")
+        , baudRate(9600)
+        , autoReconnect(true)
+        , reconnectIntervalMs(1000)
+        , enableCsvSave(false)
+        , csvDirectory("data/DXL360S")
+        , saveIntervalMs(100)
+#endif
     {
     }
 };
@@ -110,7 +147,11 @@ struct InclinometerConfig
  *
  * C++程序可以直接使用该类。
  *
- * Python / C# 等语言通过下面的 C ABI 接口调用。
+ * SDK内部串口、线程、mutex等平台相关实现通过PImpl隐藏。
+ *
+ * Windows 和 Linux 均支持。
+ *
+ * Python / C# / C 等语言通过下面的 C ABI 接口调用。
  */
 class INCLINOMETER_API Inclinometer
 {
@@ -143,12 +184,13 @@ public:
     /**
      * @brief 启动倾角仪
      *
-     * @param config 配置
+     * @param config 倾角仪配置
      *
      * @return true 启动成功
      * @return false 启动失败
      */
     bool start(const InclinometerConfig& config);
+
 
     /**
      * @brief 停止倾角仪
@@ -160,6 +202,7 @@ public:
      * @brief 判断SDK是否运行
      *
      * @return true 正在运行
+     * @return false 未运行
      */
     bool isRunning() const;
 
@@ -183,8 +226,8 @@ public:
     /**
      * @brief 同时获取X/Y角度
      *
-     * @param x X方向角度
-     * @param y Y方向角度
+     * @param x X方向角度输出
+     * @param y Y方向角度输出
      */
     void getAngle(float& x, float& y) const;
 
@@ -198,9 +241,23 @@ public:
 private:
 
     /**
-     * @brief PImpl
+     * @brief PImpl实现
      *
-     * 隐藏Windows串口、线程、mutex等内部实现。
+     * 隐藏SDK内部平台相关实现，包括：
+     *
+     * Windows：
+     *   - Windows串口HANDLE
+     *   - Windows串口API
+     *
+     * Linux：
+     *   - Linux串口文件描述符
+     *   - termios串口配置
+     *
+     * 公共实现：
+     *   - 工作线程
+     *   - mutex
+     *   - 倾角数据解析
+     *   - CSV数据保存
      */
     class Impl;
 
@@ -216,6 +273,9 @@ private:
 // C ABI
 //
 // 给 Python / C# / C 等语言调用
+//
+// 注意：
+// C ABI接口不依赖C++类，可以通过动态库直接调用。
 //======================================================================
 
 #ifdef __cplusplus
@@ -244,14 +304,26 @@ INCLINOMETER_API void Inclinometer_Destroy(void* handle);
  * @brief 启动倾角仪
  *
  * @param handle SDK对象句柄
- * @param port 串口，例如 "\\\\.\\COM7"
+ * @param port 串口
+ *
+ * Windows 例如：
+ * "\\\\.\\COM7"
+ *
+ * Linux 例如：
+ * "/dev/ttyUSB0"
+ *
  * @param baudRate 波特率，例如 9600
  * @param autoReconnect 是否自动重连
  *
  * @return 1 成功
  * @return 0 失败
  */
-INCLINOMETER_API int Inclinometer_Start(void* handle, const char* port, int baudRate, int autoReconnect);
+INCLINOMETER_API int Inclinometer_Start(
+    void* handle,
+    const char* port,
+    int baudRate,
+    int autoReconnect);
+
 
 /**
  * @brief 停止倾角仪
@@ -281,6 +353,7 @@ INCLINOMETER_API int Inclinometer_IsRunning(void* handle);
  */
 INCLINOMETER_API float Inclinometer_GetXAngle(void* handle);
 
+
 /**
  * @brief 获取Y方向角度
  *
@@ -290,6 +363,7 @@ INCLINOMETER_API float Inclinometer_GetXAngle(void* handle);
  */
 INCLINOMETER_API float Inclinometer_GetYAngle(void* handle);
 
+
 /**
  * @brief 同时获取X/Y角度
  *
@@ -297,7 +371,10 @@ INCLINOMETER_API float Inclinometer_GetYAngle(void* handle);
  * @param x X角度输出
  * @param y Y角度输出
  */
-INCLINOMETER_API void Inclinometer_GetAngle(void* handle, float* x, float* y);
+INCLINOMETER_API void Inclinometer_GetAngle(
+    void* handle,
+    float* x,
+    float* y);
 
 
 /**
