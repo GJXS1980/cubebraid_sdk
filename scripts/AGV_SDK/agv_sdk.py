@@ -36,26 +36,92 @@ class ControlMode(IntEnum):
 # ============================================================================
 class AGVClient:
     """AGV 底层 C-API 的 Python 封装类"""
-    def __init__(self, lib_path: str = None):
+    def __init__(self, lib_path: str = None):        
         """
-        初始化并加载动态链接库。
-        :param lib_path: 动态库路径 (若未提供，将自动根据平台寻找同级目录下的 .dll 或 .so)
+        初始化并加载动态库
+        :param lib_path: 动态库文件的自定义路径，若不传则自动根据系统类型推导相对路径
         """
-        if lib_path is None:
-            if sys.platform.startswith("win"):
-                lib_path = os.path.abspath("../../bin/AGV_SDK.dll")
+        curr_dir = os.path.dirname(os.path.abspath(__file__))
+
+        if sys.platform.startswith("win"):
+            # ================= Windows 平台适配 =================
+            bin_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos")) 
+
+            # 注册 DLL 搜寻路径
+            if hasattr(os, "add_dll_directory") and os.path.exists(bin_dir):
+                os.add_dll_directory(bin_dir)
+
+            # 同时将目录加入 PATH 环境变量以确保 C++ 间接依赖项也能正常查找
+            os.environ["PATH"] = bin_dir + os.path.pathsep + os.environ.get("PATH", "")
+
+            # 确定主动态库路径
+            if lib_path is None:
+                lib_name = os.path.join(bin_dir, "AGV_SDK.dll")
             else:
-                lib_path = os.path.abspath("../../lib/linux/libAGV_SDK.so")
+                lib_name = lib_path
 
-        if not os.path.exists(lib_path):
-            raise FileNotFoundError(f"找不到动态链接库文件: {lib_path}")
+        elif sys.platform.startswith("linux"):
+            # ================= Ubuntu / Linux 平台适配 =================
+            lib_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos"))
 
-        self._lib = ctypes.CDLL(lib_path)
+            # 预先遍历并载入 lib_dir 目录下所有的 .so 库到全局符号表
+            self._load_all_so_in_dir(lib_dir)
+
+            # 确定主动态库路径
+            if lib_path is None:
+                lib_name = os.path.join(lib_dir, "libAGV_SDK.so")
+            else:
+                lib_name = lib_path
+
+        else:
+            raise OSError(f"暂不支持的操作系统: {sys.platform}")
+
+        # 加载 C++ SDK 动态库
+        try:
+            abs_lib_path = os.path.abspath(lib_name)
+            if not os.path.exists(abs_lib_path):
+                raise FileNotFoundError(f"未找到指定的动态库文件: {abs_lib_path}")
+
+            if sys.platform.startswith("linux"):
+                self._lib = ctypes.CDLL(abs_lib_path, mode=ctypes.RTLD_GLOBAL)
+            else:
+                self._lib = ctypes.CDLL(abs_lib_path)
+
+            print(f"成功加载动态库: {abs_lib_path}")
+        except OSError as e:
+            print(f"动态库加载失败，请检查路径及依赖项! 详细错误: {e}")
+            sys.exit(1)
+
+        self._handle = None
         self._bind_functions()
-        
-        self._handle = self._lib.AGV_Create()
-        if not self._handle:
-            raise RuntimeError("无法创建 AGV 实例")
+
+    def _load_all_so_in_dir(self, lib_dir: str):
+        """Ubuntu Linux 专属：遍历加载指定目录下所有的 .so 文件"""
+        if not os.path.exists(lib_dir):
+            return
+
+        so_files = [
+            f for f in os.listdir(lib_dir) 
+            if (f.endswith(".so") or ".so." in f) and f != "libCameraSDK.so"
+        ]
+
+        loaded_libs = set()
+        max_attempts = 3
+
+        for attempt in range(max_attempts):
+            progress = False
+            for so_file in list(so_files):
+                so_path = os.path.join(lib_dir, so_file)
+                try:
+                    ctypes.CDLL(so_path, mode=ctypes.RTLD_GLOBAL)
+                    loaded_libs.add(so_file)
+                    so_files.remove(so_file)
+                    progress = True
+                except OSError:
+                    pass
+            
+            if not progress:
+                break
 
     def _bind_functions(self):
         """绑定 C 函数参数与返回值类型"""

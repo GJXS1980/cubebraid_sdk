@@ -1,11 +1,17 @@
 # Windows编译说明
-## 1. 创建并进入构建目录
+## 1. 拉取最新代码
+用cmd打开当前项目下命令行终端，拉取最新程序
+```bash
+git pull
+```
+
+## 2. 创建并进入构建目录
 ```bash
 mkdir build
 cd build
 ```
 
-## 2. 生成 Visual Studio 2022 的 64 位 .sln
+## 3. 生成 Visual Studio 2022 的 64 位 .sln
 ```bash
 cmake -G "Visual Studio 17 2022" -A x64 ..
 
@@ -13,7 +19,7 @@ cmake -G "Visual Studio 17 2022" -A x64 ..
 # cmake -G "Visual Studio 16 2019" -A x64 ..
 ```
 
-## 3. 进入build文件夹打开 cubebraid_sdk.sln 进行demo程序编译
+## 4. 进入build文件夹打开 cubebraid_sdk.sln 进行demo程序编译
 
 # Ubuntu 编译说明
 ## 安装依赖
@@ -27,6 +33,11 @@ mkdir build
 cd build
 ```
 ## 编译项目
+打开当前项目下命令行终端，拉取最新程序
+```bash
+git pull
+```
+
 ```bash
 # 用 CMake 生成 Makefile
 cmake -DCMAKE_BUILD_TYPE=Release ..

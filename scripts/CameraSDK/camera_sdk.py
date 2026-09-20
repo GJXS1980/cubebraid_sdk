@@ -65,14 +65,14 @@ class Camera3DSDK:
             # ================= Windows 平台适配 =================
             bin_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos")) 
 
-            # 1. 注册 DLL 搜寻路径 (Python 3.8+)
+            # 注册 DLL 搜寻路径
             if hasattr(os, "add_dll_directory") and os.path.exists(bin_dir):
                 os.add_dll_directory(bin_dir)
 
             # 同时将目录加入 PATH 环境变量以确保 C++ 间接依赖项也能正常查找
             os.environ["PATH"] = bin_dir + os.path.pathsep + os.environ.get("PATH", "")
 
-            # 2. 确定主动态库路径
+            # 确定主动态库路径
             if lib_path is None:
                 lib_name = os.path.join(bin_dir, "CameraSDK.dll")
             else:
@@ -82,10 +82,10 @@ class Camera3DSDK:
             # ================= Ubuntu / Linux 平台适配 =================
             lib_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos"))
 
-            # 1. 预先遍历并载入 lib_dir 目录下所有的 .so 库到全局符号表
+            # 预先遍历并载入 lib_dir 目录下所有的 .so 库到全局符号表
             self._load_all_so_in_dir(lib_dir)
 
-            # 2. 确定主动态库路径
+            # 确定主动态库路径
             if lib_path is None:
                 lib_name = os.path.join(lib_dir, "libCameraSDK.so")
             else:
@@ -94,7 +94,7 @@ class Camera3DSDK:
         else:
             raise OSError(f"暂不支持的操作系统: {sys.platform}")
 
-        # 3. 加载 C++ SDK 动态库
+        # 加载 C++ SDK 动态库
         try:
             abs_lib_path = os.path.abspath(lib_name)
             if not os.path.exists(abs_lib_path):
@@ -143,14 +143,14 @@ class Camera3DSDK:
 
     def _bind_functions(self):
         """绑定 C 导出接口的参数与返回值类型 (与 C-API 头文件严格对应)"""
-        # 1. 生命周期接口
+        # 生命周期接口
         self._dll.Camera3D_Create.restype = c_void_p
         self._dll.Camera3D_Create.argtypes = []
 
         self._dll.Camera3D_Destroy.restype = None
         self._dll.Camera3D_Destroy.argtypes = [c_void_p]
 
-        # 2. 初始化与连接接口
+        # 初始化与连接接口
         self._dll.Camera3D_Initialize.restype = c_int
         self._dll.Camera3D_Initialize.argtypes = [c_void_p, POINTER(Camera3DConfig)]
 
@@ -163,7 +163,7 @@ class Camera3DSDK:
         self._dll.Camera3D_IsConnected.restype = c_int
         self._dll.Camera3D_IsConnected.argtypes = [c_void_p]
 
-        # 3. 算法计算接口 (已更新 C 导出符号绑定)
+        # 算法计算接口 (已更新 C 导出符号绑定)
         self._dll.Camera3D_ProcessTradition.restype = c_int
         self._dll.Camera3D_ProcessTradition.argtypes = [
             c_void_p,
@@ -202,7 +202,7 @@ class Camera3DSDK:
             POINTER(c_double)
         ]
 
-        # 4. 状态与错误信息接口
+        # 状态与错误信息接口
         self._dll.Camera3D_GetLastError.restype = c_int
         self._dll.Camera3D_GetLastError.argtypes = [c_void_p, c_char_p, c_int]
 
