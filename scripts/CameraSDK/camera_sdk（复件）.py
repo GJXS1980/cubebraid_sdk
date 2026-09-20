@@ -80,9 +80,9 @@ class Camera3DSDK:
 
         elif sys.platform.startswith("linux"):
             # ================= Ubuntu / Linux 平台适配 =================
-            lib_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos"))
+            lib_dir = os.path.abspath(os.path.join(curr_dir, "../../build/SDK_Demos/camera_so"))
 
-            # 1. 预先遍历并载入 lib_dir 目录下所有的 .so 库到全局符号表
+            # 1. 预先遍历并载入 lib_dir 目录下所有的 .so 库到全局符号表，彻底解决 undefined symbol 报错
             self._load_all_so_in_dir(lib_dir)
 
             # 2. 确定主动态库路径
@@ -100,6 +100,7 @@ class Camera3DSDK:
             if not os.path.exists(abs_lib_path):
                 raise FileNotFoundError(f"未找到指定的动态库文件: {abs_lib_path}")
 
+            # Linux 上加载主动态库时同样开启 RTLD_GLOBAL
             if sys.platform.startswith("linux"):
                 self._dll = ctypes.CDLL(abs_lib_path, mode=ctypes.RTLD_GLOBAL)
             else:
@@ -114,30 +115,38 @@ class Camera3DSDK:
         self._bind_functions()
 
     def _load_all_so_in_dir(self, lib_dir: str):
-        """Ubuntu Linux 专属：遍历加载指定目录下所有的 .so 文件"""
+        """
+        Ubuntu Linux 专属：遍历加载指定目录下所有的 .so 文件，
+        并使用 RTLD_GLOBAL 将全部符号暴露到全局符号表中，解决未定义符号问题
+        """
         if not os.path.exists(lib_dir):
             return
 
+        # 1. 获取目录下所有 .so 动态链接库文件
         so_files = [
             f for f in os.listdir(lib_dir) 
             if (f.endswith(".so") or ".so." in f) and f != "libCameraSDK.so"
         ]
 
+        # 2. 循环加载，采用多轮加载机制（处理 .so 之间相互依赖的先后顺序问题）
         loaded_libs = set()
-        max_attempts = 3
+        max_attempts = 3  # 最多重试 3 轮解决依赖顺序
 
         for attempt in range(max_attempts):
             progress = False
             for so_file in list(so_files):
                 so_path = os.path.join(lib_dir, so_file)
                 try:
+                    # 使用 RTLD_GLOBAL 让加载的符号对其他后续库均可见
                     ctypes.CDLL(so_path, mode=ctypes.RTLD_GLOBAL)
                     loaded_libs.add(so_file)
                     so_files.remove(so_file)
                     progress = True
                 except OSError:
+                    # 本轮加载失败可能是因为它依赖的另一个 .so 还未加载，留到下一轮重试
                     pass
             
+            # 如果这一轮没有任何新的 .so 加载成功，跳出循环
             if not progress:
                 break
 
@@ -163,12 +172,12 @@ class Camera3DSDK:
         self._dll.Camera3D_IsConnected.restype = c_int
         self._dll.Camera3D_IsConnected.argtypes = [c_void_p]
 
-        # 3. 算法计算接口 (已更新 C 导出符号绑定)
+        # 3. 算法计算接口
         self._dll.Camera3D_ProcessTradition.restype = c_int
         self._dll.Camera3D_ProcessTradition.argtypes = [
             c_void_p,
-            POINTER(Camera3DCalibrationPose),  #
-            ctypes.c_char_p,                     # cameraIP
+            POINTER(Camera3DCalibrationPose),
+            ctypes.c_char_p,                     # cameraIP (C 字符串)
             c_int,
             c_float,
             c_float,
@@ -182,7 +191,7 @@ class Camera3DSDK:
         self._dll.Camera3D_ProcessLastSurface.argtypes = [
             c_void_p,
             POINTER(Camera3DCalibrationPose),
-            ctypes.c_char_p,                     # cameraIP
+            ctypes.c_char_p,                     # cameraIP (C 字符串)
             c_float,
             c_float,
             c_float,
@@ -194,7 +203,7 @@ class Camera3DSDK:
         self._dll.Camera3D_ProcessYaw.argtypes = [
             c_void_p,
             POINTER(Camera3DCalibrationPose),
-            ctypes.c_char_p,                     # cameraIP
+            ctypes.c_char_p,                     # cameraIP (C 字符串)
             c_float,
             c_float,
             c_float,
@@ -227,6 +236,7 @@ class Camera3DSDK:
             depth_file=depth_file.encode('utf-8'),
             color_file=color_file.encode('utf-8')
         )
+        # 使用 byref 传递结构体指针
         return self._dll.Camera3D_Initialize(self._handle, byref(config))
 
     def connect(self) -> int:
@@ -250,7 +260,7 @@ class Camera3DSDK:
         """
         集装箱内部/斜坡基准点计算
         :param pose: 标定位姿 (Camera3DCalibrationPose)
-        :param camera_ip: 相机 IP 地址
+        :param camera_ip: 相机 IP 地址 (如 "192.168.1.100")
         :param model_mod: 0-第一面顶吸基准点, 1-其它面
         :param agv_x: AGV 导航前向距离
         :param agv_y: AGV 导航左侧距离
@@ -260,6 +270,8 @@ class Camera3DSDK:
         :return: (状态码, 计算出的 Point3D 点坐标)
         """
         res_point = Camera3DPoint()
+        
+        # 字符串必须 encode 为 bytes 才能传给 c_char_p
         ip_bytes = camera_ip.encode('utf-8') if isinstance(camera_ip, str) else camera_ip
     
         status = self._dll.Camera3D_ProcessTradition(
@@ -282,7 +294,7 @@ class Camera3DSDK:
         """
         最后一面侧吸基准点计算
         :param pose: 标定位姿 (Camera3DCalibrationPose)
-        :param camera_ip: 相机 IP 地址
+        :param camera_ip: 相机 IP 地址 (如 "192.168.1.100")
         :param agv_x: AGV 导航前向距离
         :param agv_y: AGV 导航左侧距离
         :param j1_angle: AGV 一轴关节角 (单位: 度)
@@ -290,6 +302,8 @@ class Camera3DSDK:
         :return: (状态码, 计算出的 Point3D 点坐标)
         """
         res_point = Camera3DPoint()
+        
+        # 字符串必须 encode 为 bytes 才能传给 c_char_p
         ip_bytes = camera_ip.encode('utf-8') if isinstance(camera_ip, str) else camera_ip
                 
         status = self._dll.Camera3D_ProcessLastSurface(
@@ -310,7 +324,7 @@ class Camera3DSDK:
         """
         计算加强筋法向及 AGV 航向角偏差
         :param pose: 标定位姿 (Camera3DCalibrationPose)
-        :param camera_ip: 相机 IP 地址
+        :param camera_ip: 相机 IP 地址 (如 "192.168.1.100")
         :param slam_x: AGV 导航前向距离
         :param slam_y: AGV 导航左侧距离
         :param j1_angle: AGV 一轴关节角 (单位: 度)
@@ -318,6 +332,8 @@ class Camera3DSDK:
         :return: (状态码, 航向角偏差 Yaw - 单位: 度)
         """
         yaw_out = c_double(0.0)
+        
+        # 字符串必须 encode 为 bytes 才能传给 c_char_p
         ip_bytes = camera_ip.encode('utf-8') if isinstance(camera_ip, str) else camera_ip
                 
         status = self._dll.Camera3D_ProcessYaw(
