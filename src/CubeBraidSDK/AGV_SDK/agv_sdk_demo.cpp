@@ -43,7 +43,7 @@ int main()
     agv_sdk::AGVPose pose = agv.getPose();
     std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
     std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
-    // 控制移动：前进 1800mm
+    // 控制移动：前进 1500mm
     std::cout << "[AGV Demo] 发送前进到底指令: 1500mm (超时 100s)..." << std::endl;
     if (agv.goForward(1500.0, 100000)) 
     {
