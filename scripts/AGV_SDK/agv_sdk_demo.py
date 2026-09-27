@@ -28,8 +28,8 @@ def main():
             print("切换至【自动模式】...")
             agv.switch_control_mode(ControlMode.AUTO)
 
-            print("指令：前进到底1800mm...")
-            if agv.go_forward(1800.0, timeout_ms=100000):
+            print("指令：前进到底1500mm...")
+            if agv.go_forward(1500.0, timeout_ms=100000):
                 print("前进到达指定位置")
             else:
                 print("前进超时或未成功完成")

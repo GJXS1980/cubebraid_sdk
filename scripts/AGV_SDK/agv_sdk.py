@@ -9,6 +9,8 @@ from enum import IntEnum
 # 数据结构与枚举
 # ============================================================================
 class C_AGVPose(Structure):
+    # 如果 C++ 动态库有 #pragma pack(push, 1) 等对齐，需取消下面注释并设置对应值
+    # _pack_ = 8 
     _fields_ = [
         ("x", c_double),
         ("y", c_double),
@@ -37,10 +39,6 @@ class ControlMode(IntEnum):
 class AGVClient:
     """AGV 底层 C-API 的 Python 封装类"""
     def __init__(self, lib_path: str = None):        
-        """
-        初始化并加载动态库
-        :param lib_path: 动态库文件的自定义路径，若不传则自动根据系统类型推导相对路径
-        """
         curr_dir = os.path.dirname(os.path.abspath(__file__))
 
         if sys.platform.startswith("win"):
@@ -85,15 +83,24 @@ class AGVClient:
             if sys.platform.startswith("linux"):
                 self._lib = ctypes.CDLL(abs_lib_path, mode=ctypes.RTLD_GLOBAL)
             else:
-                self._lib = ctypes.CDLL(abs_lib_path)
+                # Windows 环境：尝试 cdecl，若函数为 stdcall 导出会自动尝试 WinDLL
+                try:
+                    self._lib = ctypes.CDLL(abs_lib_path)
+                except Exception:
+                    self._lib = ctypes.WinDLL(abs_lib_path)
 
             print(f"成功加载动态库: {abs_lib_path}")
         except OSError as e:
             print(f"动态库加载失败，请检查路径及依赖项! 详细错误: {e}")
             sys.exit(1)
 
-        self._handle = None
+        # 1. 绑定函数类型
         self._bind_functions()
+
+        # 2. 创建底层 C++ 对象实例并保存句柄 (修复关键点)
+        self._handle = self._lib.AGV_Create()
+        if not self._handle:
+            raise RuntimeError("调用 AGV_Create 失败：无法实例化底层 AGV 对象！")
 
     def _load_all_so_in_dir(self, lib_dir: str):
         """Ubuntu Linux 专属：遍历加载指定目录下所有的 .so 文件"""
@@ -105,16 +112,13 @@ class AGVClient:
             if (f.endswith(".so") or ".so." in f) and f != "libCameraSDK.so"
         ]
 
-        loaded_libs = set()
         max_attempts = 3
-
         for attempt in range(max_attempts):
             progress = False
             for so_file in list(so_files):
                 so_path = os.path.join(lib_dir, so_file)
                 try:
                     ctypes.CDLL(so_path, mode=ctypes.RTLD_GLOBAL)
-                    loaded_libs.add(so_file)
                     so_files.remove(so_file)
                     progress = True
                 except OSError:
@@ -185,6 +189,8 @@ class AGVClient:
     # ------------------------------------------------------------------------
     def connect(self, ip: str, port: int) -> bool:
         """连接 AGV 服务器"""
+        if not self._handle:
+            raise RuntimeError("AGV 句柄未初始化或已被销毁！")
         return self._lib.AGV_Connect(self._handle, ip.encode('utf-8'), port)
 
     def disconnect(self):
@@ -215,7 +221,7 @@ class AGVClient:
     def set_manual_velocity(self, vx: float, vy: float, w: float) -> bool:
         """手动设置速度 (vx: mm/s, vy: mm/s, w: 0.001 rad/s)"""
         return self._lib.AGV_ManualCtlVelSet(self._handle, float(vx), float(vy), float(w))
-    
+
     def move_manual_for_duration(self, vx: float, vy: float, w: float, duration_s: float, interval_s: float = 0.1) -> bool:
         """
         在指定时间内持续发送手动控制速度指令，并在到达时间后发送停止指令。
@@ -256,7 +262,7 @@ class AGVClient:
                 success = False
 
         return success
-
+    
     def query_system_state(self) -> bool:
         """发送系统状态查询请求"""
         return self._lib.AGV_QuerySystemState(self._handle)
