@@ -41,17 +41,39 @@ int main()
     // 查询当前状态与位姿
     agv.querySystemState();
     agv_sdk::AGVPose pose = agv.getPose();
-    std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
-    std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
-    // 控制移动：前进 1500mm
-    std::cout << "[AGV Demo] 发送前进到底指令: 1500mm (超时 100s)..." << std::endl;
-    if (agv.goForward(1500.0, 100000)) 
+    std::cout << "前进后位姿 -> 前方距离 X: " << pose.x << "m" << std::endl;
+    std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.y << "m" << std::endl;
+
+    agv_sdk::GoalPose navPose{1.03, 0.813, 0.0};
+
+    // 控制移动：导航到指定坐标
+    std::cout << "[AGV Demo] 发送导航到指定坐标指令" << std::endl;
+    std::cout << "[AGV Demo] 坐标x:  " << navPose.x << std::endl;
+    std::cout << "[AGV Demo] 坐标y:  " << navPose.y << std::endl;
+    std::cout << "[AGV Demo] 坐标yaw:  " << navPose.yaw << std::endl;
+    if (agv.navToPose(navPose, 100000)) 
     {
-        std::cout << "[AGV Demo] 前进到底到位！" << std::endl;
+        std::cout << "[AGV Demo] 导航到指定坐标！" << std::endl;
     } 
     else 
     {
-        std::cerr << "[AGV Demo] 前进到底指令超时或执行失败！" << std::endl;
+        std::cerr << "[AGV Demo] 导航到指定坐标超时或执行失败！" << std::endl;
+    }
+
+    // 更新位姿
+    pose = agv.getPose();
+    std::cout << "前进后位姿 -> 前方距离 X: " << pose.x << "m" << std::endl;
+    std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.y << "m" << std::endl;
+
+    // 控制移动：导航到指定站点
+    std::cout << "[AGV Demo] 发送导航到指定站点指令" << std::endl;
+    if (agv.navToStation(1, 100000)) 
+    {
+        std::cout << "[AGV Demo] 导航到站点1！" << std::endl;
+    } 
+    else 
+    {
+        std::cerr << "[AGV Demo] 导航到站点1超时或执行失败！" << std::endl;
     }
 
     // 更新位姿
@@ -59,11 +81,15 @@ int main()
     std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
     std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
 
-    // 前进 500mm
-    std::cout << "[AGV Demo] 发送单步前进指令: 500mm (超时 100s)..." << std::endl;
-    if (agv.goBack(500.0, 100000)) 
+    // 控制移动：导航到指定站点
+    std::cout << "[AGV Demo] 发送导航到站点2指令" << std::endl;
+    if (agv.navToStation(2, 100000)) 
     {
-        std::cout << "[AGV Demo] 单步前进到位！" << std::endl;
+        std::cout << "[AGV Demo] 导航到站点2！" << std::endl;
+    } 
+    else 
+    {
+        std::cerr << "[AGV Demo] 导航到站点2超时或执行失败！" << std::endl;
     }
 
     // 更新位姿
@@ -71,11 +97,15 @@ int main()
     std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
     std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
 
-    // 后退 500mm
-    std::cout << "[AGV Demo] 发送单步后退指令: 500mm (超时 100s)..." << std::endl;
-    if (agv.goBack(-500.0, 100000)) 
+    // 控制移动：导航到指定站点
+    std::cout << "[AGV Demo] 发送导航到站点3指令" << std::endl;
+    if (agv.navToStation(3, 100000)) 
     {
-        std::cout << "[AGV Demo] 单步后退到位！" << std::endl;
+        std::cout << "[AGV Demo] 导航到站点3！" << std::endl;
+    } 
+    else 
+    {
+        std::cerr << "[AGV Demo] 导航到站点3超时或执行失败！" << std::endl;
     }
 
     // 更新位姿
@@ -87,23 +117,74 @@ int main()
     std::cout << "[AGV Demo] 切换为手动控制模式..." << std::endl;
     agv.switchControlMode(agv_sdk::ControlMode::Manual);
 
-    std::cout << "[AGV Demo] 切换为手动速度控制模式: 100mm/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
-    // 传入 vx=100.0, vy=0.0, w=0.0，持续时间 2000ms，内部每 50ms 重发一次
-    agv.moveManualForDuration(100.0f, 0.0f, 0.0f, 2000, 50);
-
-    std::cout << "[AGV Demo] 切换为手动速度控制模式: -100mm/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
-    // 传入 vx=-100.0, vy=0.0, w=0.0，持续时间 2000ms，内部每 50ms 重发一次
-    agv.moveManualForDuration(-100.0f, 0.0f, 0.0f, 2000, 50);
-
-    std::cout << "[AGV Demo] 切换为手动速度控制模式: 0.1rad/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
-    // 传入 vx=0.0, vy=0.0, w=100.0，持续时间 2000ms，内部每 50ms 重发一次
-    agv.moveManualForDuration(0.0f, 0.0f, 100.0f, 2000, 50);
-
-    std::cout << "[AGV Demo] 切换为手动速度控制模式: -0.1rad/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
-    // 传入 vx=0.0, vy=0.0, w=-100.0，持续时间 2000ms，内部每 50ms 重发一次
-    agv.moveManualForDuration(0.0f, 0.0f, -100.0f, 2000, 50);
-
     std::cout << "[AGV Demo] 手动控制结束并已停止" << std::endl;
+
+    // // 查询当前状态与位姿
+    // agv.querySystemState();
+    // agv_sdk::AGVPose pose = agv.getPose();
+    // std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
+    // std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
+    // // 控制移动：前进 1500mm
+    // std::cout << "[AGV Demo] 发送前进到底指令: 1500mm (超时 100s)..." << std::endl;
+    // if (agv.goForward(1500.0, 100000)) 
+    // {
+    //     std::cout << "[AGV Demo] 前进到底到位！" << std::endl;
+    // } 
+    // else 
+    // {
+    //     std::cerr << "[AGV Demo] 前进到底指令超时或执行失败！" << std::endl;
+    // }
+
+    // // 更新位姿
+    // pose = agv.getPose();
+    // std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
+    // std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
+
+    // // 前进 500mm
+    // std::cout << "[AGV Demo] 发送单步前进指令: 500mm (超时 100s)..." << std::endl;
+    // if (agv.goBack(500.0, 100000)) 
+    // {
+    //     std::cout << "[AGV Demo] 单步前进到位！" << std::endl;
+    // }
+
+    // // 更新位姿
+    // pose = agv.getPose();
+    // std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
+    // std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
+
+    // // 后退 500mm
+    // std::cout << "[AGV Demo] 发送单步后退指令: 500mm (超时 100s)..." << std::endl;
+    // if (agv.goBack(-500.0, 100000)) 
+    // {
+    //     std::cout << "[AGV Demo] 单步后退到位！" << std::endl;
+    // }
+
+    // // 更新位姿
+    // pose = agv.getPose();
+    // std::cout << "前进后位姿 -> 前方距离 X: " << pose.roll << "m" << std::endl;
+    // std::cout << "前进后位姿 -> 左侧距离 Y: " << pose.pitch << "m" << std::endl;
+
+    // // 切换为手动控制模式
+    // std::cout << "[AGV Demo] 切换为手动控制模式..." << std::endl;
+    // agv.switchControlMode(agv_sdk::ControlMode::Manual);
+
+    // std::cout << "[AGV Demo] 切换为手动速度控制模式: 100mm/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
+    // // 传入 vx=100.0, vy=0.0, w=0.0，持续时间 2000ms，内部每 50ms 重发一次
+    // agv.moveManualForDuration(100.0f, 0.0f, 0.0f, 2000, 50);
+
+    // std::cout << "[AGV Demo] 切换为手动速度控制模式: -100mm/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
+    // // 传入 vx=-100.0, vy=0.0, w=0.0，持续时间 2000ms，内部每 50ms 重发一次
+    // agv.moveManualForDuration(-100.0f, 0.0f, 0.0f, 2000, 50);
+
+    // std::cout << "[AGV Demo] 切换为手动速度控制模式: 0.1rad/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
+    // // 传入 vx=0.0, vy=0.0, w=100.0，持续时间 2000ms，内部每 50ms 重发一次
+    // agv.moveManualForDuration(0.0f, 0.0f, 100.0f, 2000, 50);
+
+    // std::cout << "[AGV Demo] 切换为手动速度控制模式: -0.1rad/s速度前进2000ms (自动重发与归零停止)..." << std::endl;
+    // // 传入 vx=0.0, vy=0.0, w=-100.0，持续时间 2000ms，内部每 50ms 重发一次
+    // agv.moveManualForDuration(0.0f, 0.0f, -100.0f, 2000, 50);
+
+    // std::cout << "[AGV Demo] 手动控制结束并已停止" << std::endl;
 
     // 登出与断开
     std::cout << "[AGV Demo] 断开连接..." << std::endl;

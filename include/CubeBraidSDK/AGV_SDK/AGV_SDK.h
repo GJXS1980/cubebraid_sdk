@@ -33,7 +33,7 @@
 namespace agv_sdk 
 {
     /**
-     * @brief AGV 位置与姿态结构体 (6自由度)
+     * @brief AGV 位置与姿态结构体
      */
     struct AGVPose 
     {
@@ -44,6 +44,14 @@ namespace agv_sdk
         double pitch{0.0}; // 左侧距离 (m)
         double yaw{0.0};
     };
+
+    struct GoalPose
+    {
+        double x{0.0};
+        double y{0.0};
+        double yaw{0.0};
+    };
+
 
     /**
      * @brief AGV 控制模式(手动/自动模式)
@@ -111,6 +119,24 @@ namespace agv_sdk
          * @param timeout_ms 超时时间 (单位: 毫秒，默认 30 秒)
          */
         bool goBack(double dist_mm, int timeout_ms = 30000);
+
+        /**
+        * @brief AGV导航到指定坐标函数
+        * 
+        * @param pose 指标坐标点(x, y, z)
+        * @param timeout_ms 超时时间 (ms)
+        * @return bool 任务完成返回 true，超时或中断返回 false
+        */
+        bool navToPose(GoalPose pose, int timeout_ms = 30000);
+
+        /**
+        * @brief AGV导航到站点
+        * 
+        * @param stations_num 站点编号
+        * @param timeout_ms 超时时间 (ms)
+        * @return bool 任务完成返回 true，超时或中断返回 false
+        */
+        bool navToStation(int stations_num, int timeout_ms = 30000);
 
         /**
          * @brief 单次发送手动速度控制指令（需要在手动模式下）
@@ -193,6 +219,8 @@ namespace agv_sdk
         std::condition_variable m_taskCv;       // 用于阻塞等待指令完成的条件变量
         bool m_forwardFinished{false};          // 前进指令是否执行完毕
         bool m_backFinished{false};             // 后退指令是否执行完毕
+        bool m_navToPoseFinished{false};             // 导航到指定目标点指令是否执行完毕
+        bool m_navToStationFinished{false};             // 导航到指定站点指令是否执行完毕
 
         // --------------------------------------------------------------------
         // 网络接收流缓冲区
@@ -227,6 +255,13 @@ typedef struct
     double yaw;
 } C_AGVPose;
 
+typedef struct 
+{
+    double x;
+    double y;
+    double yaw;
+} C_GoalPose;
+
 /**
  * @brief C 兼容接口使用的控制模式枚举
  */
@@ -255,6 +290,8 @@ AGV_API bool       AGV_Logout(AGV_Handle handle);
 AGV_API bool       AGV_SwitchControlMode(AGV_Handle handle, C_ControlMode mode);
 AGV_API bool       AGV_GoForward(AGV_Handle handle, double dist_mm, int timeout_ms);
 AGV_API bool       AGV_GoBack(AGV_Handle handle, double dist_mm, int timeout_ms);
+AGV_API bool       AGV_NavToPose(AGV_Handle handle, C_GoalPose pose, int timeout_ms); 
+AGV_API bool       AGV_ToStation(AGV_Handle handle, int stations_num, int timeout_ms); 
 AGV_API bool       AGV_ManualCtlVelSet(AGV_Handle handle, float vx, float vy, float w);
 
 // 状态与查询接口

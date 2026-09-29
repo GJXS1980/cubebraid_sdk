@@ -20,6 +20,15 @@ class C_AGVPose(Structure):
         ("yaw", c_double)
     ]
 
+class C_GoalPose(Structure):
+    # 如果 C++ 动态库有 #pragma pack(push, 1) 等对齐，需取消下面注释并设置对应值
+    # _pack_ = 8 
+    _fields_ = [
+        ("x", c_double),
+        ("y", c_double),
+        ("yaw", c_double)
+    ]
+
 @dataclass
 class AGVPose:
     x: float = 0.0
@@ -155,7 +164,13 @@ class AGVClient:
 
         self._lib.AGV_GoBack.argtypes = [c_void_p, c_double, c_int]
         self._lib.AGV_GoBack.restype = c_bool
-
+        
+        self._lib.AGV_NavToPose.argtypes = [c_void_p, C_GoalPose, c_int]
+        self._lib.AGV_NavToPose.restype = c_bool
+        
+        self._lib.AGV_ToStation.argtypes = [c_void_p, c_int, c_int]
+        self._lib.AGV_ToStation.restype = c_bool
+        
         self._lib.AGV_ManualCtlVelSet.argtypes = [c_void_p, c_float, c_float, c_float]
         self._lib.AGV_ManualCtlVelSet.restype = c_bool
 
@@ -217,6 +232,14 @@ class AGVClient:
     def go_back(self, dist_mm: float, timeout_ms: int = 30000) -> bool:
         """控制 AGV 后退 (阻塞至完成或超时)"""
         return self._lib.AGV_GoBack(self._handle, float(dist_mm), timeout_ms)
+    
+    def navToPose(self, pose: C_GoalPose, timeout_ms: int = 30000) -> bool:
+        """控制 AGV 后退 (阻塞至完成或超时)"""
+        return self._lib.AGV_NavToPose(self._handle, pose, timeout_ms)
+    
+    def toStation(self, stations_num: int, timeout_ms: int = 30000) -> bool:
+        """控制 AGV 后退 (阻塞至完成或超时)"""
+        return self._lib.AGV_ToStation(self._handle, int(stations_num), timeout_ms)
 
     def set_manual_velocity(self, vx: float, vy: float, w: float) -> bool:
         """手动设置速度 (vx: mm/s, vy: mm/s, w: 0.001 rad/s)"""
