@@ -37,6 +37,7 @@ typedef struct
     int16_t plc_init_state;               // PLC初始化状态
     int16_t table_init_control_ok_state;  // 摆台初始化完成状态
     int16_t plc_data_request_state;       // PLC数据请求状态
+    int16_t plc_unload_state;             // PLC卸货允许请求状态
 } PLCStatus;
 
 // 取料参数输入结构体
