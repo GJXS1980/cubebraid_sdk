@@ -177,6 +177,14 @@ extern "C"
     */
     PLC_SDK_API void plc_set_inclinometer_error_signal(PLC_HANDLE handle, bool enable);
 
+    /**
+    * @brief 发送卸柜放置OK信号
+    * @param handle 控制器句柄
+    * @param enable 是否打开
+    * @return None
+    */
+    PLC_SDK_API void plc_set_unload_ok_signal(PLC_HANDLE handle, bool enable);
+
     // 业务数据与状态控制接口
     /**
     * @brief 获取当前PLC状态
@@ -359,6 +367,13 @@ namespace plc_sdk
         */
         void setInclinometerErrorSignal(bool enable);
 
+        /**
+        * @brief 发送卸柜放置OK信号
+        * @param enable 是否打开
+        * @return None
+        */
+        void setUnloadOKSignal(bool enable);
+
         // 业务与状态数据控制接口
         /**
         * @brief 获取当前PLC状态
@@ -440,6 +455,7 @@ namespace plc_sdk
         bool fixture_initialization_signal_{false};     // 底托缩回信号
         bool close_suction_cup_signal_{false};          // 吸盘关闭信号
         bool inclinometer_error_signal_{false};         // 倾角仪异常信号
+        bool unload_ok_signal_{false};                  // 卸柜放置OK信号
 
         PLCStatus current_status_{};    // PLC当前状态
 
