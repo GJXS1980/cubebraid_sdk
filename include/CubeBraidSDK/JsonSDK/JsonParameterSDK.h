@@ -300,6 +300,9 @@ int JsonParameterSDK_GetStackStyleDiffX(const char* file_path, int index, float*
 JSONPARAMETER_SDK_API
 int JsonParameterSDK_GetPalletizingPatternData(const char* file_path, int index, PalletizingPatternData* result);
 
+// 获取垛型数据
+JSONPARAMETER_SDK_API
+int JsonParameterSDK_GetPalletizingPatternDataSize(const char* file_path, int* count);
 
 #ifdef __cplusplus
 }

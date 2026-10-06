@@ -155,6 +155,18 @@ int main()
         std::cout << "JSON 文件读取失败" << std::endl;
     }
 
+    // 读取垛型json文件大小
+    int json_siz;
+    ret = JsonParameterSDK_GetPalletizingPatternDataSize("./data/json/rd_demo_data_keba.json", &json_siz);
+    if (ret == JSONPARAM_SDK_SUCCESS)
+    {
+        std::cout << "json文件大小为: " << json_siz << std::endl;
+    }
+    else
+    {   
+        std::cout << "JSON 文件读取失败" << std::endl;
+    }
+
     JsonParameterSDK_Uninitialize();
 
     return 0;
