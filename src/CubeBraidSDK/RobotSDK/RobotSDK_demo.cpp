@@ -9,14 +9,6 @@ using namespace robot_sdk;
 
 int main() 
 {
-    // 注册 SIGINT (Ctrl + C) 信号回调函数
-    std::signal(SIGINT, robot_stop_signal);
-
-    // while (!robot_stop) 
-    // {
-    //     // 机器人主循环业务代码...
-    // }
-
     std::cout << "========== 机器人 SDK C++ 测试程序 ==========\n" << std::endl;
 
     // 实例化 SDK 主对象
@@ -143,7 +135,7 @@ int main()
     double inclxAngle = 0; // 倾角 0°
 
     // 顶吸偏移量xyz求解
-    Pose resultPose = RobotController::Top_suction_angle(
+    Pose resultPose = robot.Top_suction_angle(
         centroid, box, fetchMode, skuNum, disY, 
         poseOffset, isROffset, modelMod, inclxAngle
     );
@@ -158,7 +150,7 @@ int main()
               << "========================================\n";
     
     // 顶吸特殊码法偏移量xyz求解
-    resultPose = RobotController::Top_suction_special(
+    resultPose = robot.Top_suction_special(
         centroid, box, fetchMode, skuNum, disY, 
         poseOffset, isROffset, modelMod, inclxAngle
     );
@@ -176,7 +168,7 @@ int main()
     float container_h = 2698;      // 集装箱高度
     bool switch_top_bottom_suction = false;  // 上层/下次侧吸切换标志位 (true: 下层侧吸(酒类), false: 上层侧吸(默认))
     // 上层侧吸偏移量xyz求解
-    resultPose = RobotController::Side_suction_angle(
+    resultPose = robot.Side_suction_angle(
         centroid, box, fetchMode, fetchMode_side, skuNum, disY, 
         poseOffset, isROffset, modelMod, inclxAngle, container_h, switch_top_bottom_suction
     );
@@ -192,7 +184,7 @@ int main()
 
     // 下层侧吸偏移量xyz求解
     switch_top_bottom_suction = true;
-    resultPose = RobotController::Side_suction_angle(
+    resultPose = robot.Side_suction_angle(
         centroid, box, fetchMode, fetchMode_side, skuNum, disY, 
         poseOffset, isROffset, modelMod, inclxAngle, container_h, switch_top_bottom_suction
     );
@@ -212,7 +204,7 @@ int main()
     Eigen::Vector3d euler_temp(5.0, -10.0, 15.0);
 
     // 计算相对旋转角度
-    Eigen::Vector3d delta_deg = robot_sdk::RobotController::computeDeltaEulerZYZ_deg(euler_before, euler_temp);
+    Eigen::Vector3d delta_deg = robot.computeDeltaEulerZYZ_deg(euler_before, euler_temp);
 
     // 格式化输出结果
     std::cout << "====== ZYZ 欧拉角相对旋转计算结果 ======" << std::endl;

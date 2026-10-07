@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <chrono>
-
+#include <string> 
 
 int main()
 {
@@ -229,7 +229,7 @@ int main()
     std::cout << "读取垛型 JSON 数据耗时: " << elapsedMs << " ms" << std::endl;
 
     // 更改json数值
-    ret = JsonParameterSDK_ModifyJsonField("./data/json/robot_data.json", "switch_num", "10");
+    ret = JsonParameterSDK_ModifyJsonField("./data/json/robot_data.json", "switch_num", std::to_string(100).c_str());
 
     if (ret == JSONPARAM_SDK_SUCCESS)
     {
