@@ -316,6 +316,27 @@ JSONPARAMETER_SDK_API int JsonParameterSDK_GetPalletizingPatternDataCacheSize(in
 // 清空垛型数据缓存
 JSONPARAMETER_SDK_API int JsonParameterSDK_ClearPalletizingPatternDataCache();
 
+
+/**
+ * @brief 修改 JSON 文件中的指定字段
+ *
+ * @param file_path JSON 文件路径
+ * @param field_name 要修改的字段名
+ * @param new_value_json 新值对应的 JSON 字符串
+ *
+ * @return JSONPARAM_SDK_SUCCESS 修改成功
+ *         其他错误码 修改失败
+ *
+ * 示例：
+ * "123"       表示整数 123
+ * "12.5"      表示浮点数 12.5
+ * "\"hello\"" 表示字符串 hello
+ * "true"      表示布尔值 true
+ * "[1,2,3]"   表示 JSON 数组
+ * "{\"x\":1}" 表示 JSON 对象
+ */
+JSONPARAMETER_SDK_API int JsonParameterSDK_ModifyJsonField(const char* file_path, const char* field_name, const char* new_value_json);
+
 #ifdef __cplusplus
 }
 #endif

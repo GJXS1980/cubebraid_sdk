@@ -9,6 +9,14 @@ using namespace robot_sdk;
 
 int main() 
 {
+    // 注册 SIGINT (Ctrl + C) 信号回调函数
+    std::signal(SIGINT, robot_stop_signal);
+
+    // while (!robot_stop) 
+    // {
+    //     // 机器人主循环业务代码...
+    // }
+
     std::cout << "========== 机器人 SDK C++ 测试程序 ==========\n" << std::endl;
 
     // 实例化 SDK 主对象

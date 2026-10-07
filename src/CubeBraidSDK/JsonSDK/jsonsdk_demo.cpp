@@ -92,15 +92,15 @@ int main()
     }
 
     // 初始化机器人json文件
-    ret = JsonParameterSDK_InitRobotData("./data/json/robot_data.json");
-    if (ret == JSONPARAM_SDK_SUCCESS)
-    {
-        std::cout << "JSON 文件更新成功" << std::endl;
-    }
-    else
-    {   
-        std::cout << "JSON 文件更新失败" << std::endl;
-    }
+    // ret = JsonParameterSDK_InitRobotData("./data/json/robot_data.json");
+    // if (ret == JSONPARAM_SDK_SUCCESS)
+    // {
+    //     std::cout << "JSON 文件更新成功" << std::endl;
+    // }
+    // else
+    // {   
+    //     std::cout << "JSON 文件更新失败" << std::endl;
+    // }
 
     // 读取续码txt文件
     ContinuationConfig conConfig;
@@ -193,11 +193,11 @@ int main()
 
     std::cout << "垛型数量: " << json_siz << std::endl;
 
+    PalletizingPatternData palletizingPatternAllData;
+
     // 循环通过索引读取缓存
     for (int k = 0; k < json_siz; ++k)
     {
-        PalletizingPatternData palletizingPatternAllData;
-
         ret = JsonParameterSDK_GetPalletizingPatternDataFromCache(k, &palletizingPatternAllData);
 
         if (ret != JSONPARAM_SDK_SUCCESS)
@@ -228,7 +228,20 @@ int main()
 
     std::cout << "读取垛型 JSON 数据耗时: " << elapsedMs << " ms" << std::endl;
 
+    // 更改json数值
+    ret = JsonParameterSDK_ModifyJsonField("./data/json/robot_data.json", "switch_num", "10");
+
+    if (ret == JSONPARAM_SDK_SUCCESS)
+    {
+        std::cout << "JSON 字段修改成功！" << std::endl;
+    }
+    else
+    {
+        std::cout << "JSON 字段修改失败！" << std::endl;
+    }
+
     JsonParameterSDK_Uninitialize();
+
 
     return 0;
 }

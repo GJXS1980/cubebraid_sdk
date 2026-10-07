@@ -3,7 +3,6 @@
 
 #include <string>
 #include <memory>
-
 #include <Eigen/Dense>
 
 // 动态库导出/导入宏定义
