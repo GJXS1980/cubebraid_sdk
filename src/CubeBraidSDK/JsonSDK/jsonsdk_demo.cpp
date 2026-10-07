@@ -1,6 +1,7 @@
 ﻿#include "CubeBraidSDK/JsonSDK/JsonParameterSDK.h"
 
 #include <iostream>
+#include <chrono>
 
 
 int main()
@@ -120,6 +121,18 @@ int main()
         std::cout << "JSON 文件读取失败" << std::endl;
     }
 
+    // 读取垛型json文件大小
+    int json_siz;
+    ret = JsonParameterSDK_GetPalletizingPatternDataSize("./data/json/rd_demo_data_keba.json", &json_siz);
+    if (ret == JSONPARAM_SDK_SUCCESS)
+    {
+        std::cout << "json文件大小为: " << json_siz << std::endl;
+    }
+    else
+    {   
+        std::cout << "JSON 文件读取失败" << std::endl;
+    }
+
     // 读取垛型json文件
     PalletizingPatternData palletizingPatternData;
     ret = JsonParameterSDK_GetPalletizingPatternData("./data/json/rd_demo_data_keba.json", 2, &palletizingPatternData);
@@ -155,17 +168,65 @@ int main()
         std::cout << "JSON 文件读取失败" << std::endl;
     }
 
-    // 读取垛型json文件大小
-    int json_siz;
-    ret = JsonParameterSDK_GetPalletizingPatternDataSize("./data/json/rd_demo_data_keba.json", &json_siz);
-    if (ret == JSONPARAM_SDK_SUCCESS)
+
+
+    // 记录开始时间
+    auto startTime = std::chrono::steady_clock::now();
+
+    // 一次性加载垛型 JSON 文件
+    ret = JsonParameterSDK_LoadPalletizingPatternData("./data/json/rd_demo_data_keba.json");
+
+    if (ret != JSONPARAM_SDK_SUCCESS)
     {
-        std::cout << "json文件大小为: " << json_siz << std::endl;
+        std::cout << "垛型 JSON 加载失败" << std::endl;
+        return -1;
     }
-    else
-    {   
-        std::cout << "JSON 文件读取失败" << std::endl;
+
+    // 获取缓存中的垛型数量
+    ret = JsonParameterSDK_GetPalletizingPatternDataCacheSize(&json_siz);
+
+    if (ret != JSONPARAM_SDK_SUCCESS)
+    {
+        std::cout << "获取垛型数量失败" << std::endl;
+        return -1;
     }
+
+    std::cout << "垛型数量: " << json_siz << std::endl;
+
+    // 循环通过索引读取缓存
+    for (int k = 0; k < json_siz; ++k)
+    {
+        PalletizingPatternData palletizingPatternAllData;
+
+        ret = JsonParameterSDK_GetPalletizingPatternDataFromCache(k, &palletizingPatternAllData);
+
+        if (ret != JSONPARAM_SDK_SUCCESS)
+        {
+            std::cout << "读取垛型缓存失败，索引: " << k << std::endl;
+            continue;
+        }
+
+        // std::cout << "当前索引: " << k << std::endl;
+        // std::cout << "面数: " << palletizingPatternAllData.number_of_surface << std::endl;
+        // std::cout << "层数: " << palletizingPatternAllData.number_of_layers << std::endl;
+        // std::cout << "垛型 X: " << palletizingPatternAllData.x << std::endl;
+        // std::cout << "垛型 Y: " << palletizingPatternAllData.y << std::endl;
+        // std::cout << "垛型 Z: " << palletizingPatternAllData.z << std::endl;
+        // std::cout << "产品长: " << palletizingPatternAllData.sku_l << std::endl;
+        // std::cout << "产品宽: " << palletizingPatternAllData.sku_w << std::endl;
+        // std::cout << "产品高: " << palletizingPatternAllData.sku_h << std::endl;
+        // std::cout << "单次抓取数量: " << palletizingPatternAllData.sku_num << std::endl;
+    }
+
+    // 如果后续不再需要缓存，可以主动清理
+    JsonParameterSDK_ClearPalletizingPatternDataCache();
+    // 记录结束时间
+    auto endTime = std::chrono::steady_clock::now();
+
+    // 计算运行时间
+    auto elapsedMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+
+    std::cout << "读取垛型 JSON 数据耗时: " << elapsedMs << " ms" << std::endl;
 
     JsonParameterSDK_Uninitialize();
 

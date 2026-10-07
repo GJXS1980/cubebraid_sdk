@@ -304,6 +304,18 @@ int JsonParameterSDK_GetPalletizingPatternData(const char* file_path, int index,
 JSONPARAMETER_SDK_API
 int JsonParameterSDK_GetPalletizingPatternDataSize(const char* file_path, int* count);
 
+// 一次性加载垛型 JSON 文件
+JSONPARAMETER_SDK_API int JsonParameterSDK_LoadPalletizingPatternData(const char* file_path);
+
+// 从内存缓存中根据索引获取垛型数据
+JSONPARAMETER_SDK_API int JsonParameterSDK_GetPalletizingPatternDataFromCache(int index, PalletizingPatternData* result);
+
+// 获取内存缓存中的垛型数量
+JSONPARAMETER_SDK_API int JsonParameterSDK_GetPalletizingPatternDataCacheSize(int* count);
+
+// 清空垛型数据缓存
+JSONPARAMETER_SDK_API int JsonParameterSDK_ClearPalletizingPatternDataCache();
+
 #ifdef __cplusplus
 }
 #endif
